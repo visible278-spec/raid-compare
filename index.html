@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Сравнение рейдов игроков</title>
+<script src='https://unpkg.com/tesseract.js@5/dist/tesseract.min.js'></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+  :root {
+    --bg-primary: #1a1a2e; --bg-secondary: #16213e; --bg-tertiary: #0f3460;
+    --accent: #e94560; --accent-hover: #ff6b81;
+    --text-primary: #e0e0e0; --text-secondary: #aaa;
+    --border: #2a2a4a; --success: #2d6a4f; --warning: #e76f51;
+    --danger: #6b1d1d; --purple: #533483;
+    --cell-green: rgba(45,106,79,0.4); --cell-yellow: rgba(230,180,50,0.2);
+    --cell-red: rgba(180,40,40,0.3); --cell-avg: rgba(83,52,131,0.3);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; transition: background 0.3s; }
+  .header { background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)); padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); flex-wrap: wrap; gap: 10px; }
+  .header h1 { font-size: 24px; color: var(--accent); }
+  .header-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.3s; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--purple); }
+  .btn-secondary:hover { background: var(--purple); }
+  .btn-warning { background: var(--warning); color: white; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-admin { background: var(--purple); color: white; }
+  .btn-guest { background: transparent; color: var(--text-secondary); border: 1px dashed var(--text-secondary); }
+  .btn-guest:hover { color: var(--accent); border-color: var(--accent); }
+
+  .tabs { display: flex; background: var(--bg-secondary); border-bottom: 1px solid #333; flex-wrap: wrap; }
+  .tab { padding: 12px 24px; cursor: pointer; border: none; background: transparent; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-bottom: 3px solid transparent; }
+  .tab:hover { color: var(--text-primary); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .content { padding: 20px; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .table-container { overflow-x: auto; background: var(--bg-secondary); border-radius: 10px; padding: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  th, td { padding: 6px 10px; text-align: center; border: 1px solid var(--border); white-space: nowrap; }
+  th { background: var(--bg-tertiary); color: var(--accent); font-weight: 700; cursor: pointer; position: sticky; top: 0; }
+  th:hover { background: #1a4a7a; }
+  .row-header { background: var(--bg-tertiary); font-weight: 700; color: var(--accent); text-align: left; position: sticky; left: 0; z-index: 2; }
+  .unit-header { background: #1a1a3e; font-weight: 700; color: var(--purple); text-align: left; }
+  .highlight-on .cell-green { background: var(--cell-green); color: #95d5b2; }
+  .highlight-on .cell-red { background: var(--cell-red); color: #f4a0a0; }
+  .highlight-on .cell-yellow { background: var(--cell-yellow); color: #f0d080; }
+
+  .compare-panel { background: var(--bg-secondary); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+  .compare-panel h3 { color: var(--accent); margin-bottom: 15px; }
+  .compare-selectors { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  .compare-selectors select { padding: 8px 12px; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--purple); border-radius: 6px; }
+  .compare-selectors .vs { font-size: 20px; font-weight: 700; color: var(--accent); }
+  .diff-positive { color: #95d5b2; font-weight: 700; }
+  .diff-negative { color: #f4a0a0; font-weight: 700; }
+
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--bg-secondary); border-radius: 12px; padding: 30px; max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; border: 1px solid var(--accent); }
+  .modal h2 { color: var(--accent); margin-bottom: 20px; }
+  .form-group { margin-bottom: 15px; }
+  .form-group label { display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 13px; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px 12px; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--purple); border-radius: 6px; }
+  .form-group textarea { resize: vertical; min-height: 60px; }
+  .form-section { margin-bottom: 20px; padding: 15px; background: rgba(15,52,96,0.5); border-radius: 8px; }
+  .form-section h4 { color: var(--purple); margin-bottom: 10px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+  .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
+
+  .ocr-section { background: rgba(83,52,131,0.2); border: 2px dashed var(--purple); border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center; }
+  .ocr-section h4 { color: var(--accent); margin-bottom: 10px; }
+  .ocr-dropzone { border: 2px dashed var(--purple); border-radius: 8px; padding: 30px; cursor: pointer; background: rgba(15,52,96,0.3); }
+  .ocr-dropzone:hover { border-color: var(--accent); }
+  .ocr-preview { margin-top: 15px; max-width: 100%; max-height: 200px; display: none; }
+  .ocr-progress { margin-top: 15px; display: none; }
+  .ocr-progress-bar { width: 100%; height: 20px; background: var(--bg-tertiary); border-radius: 10px; overflow: hidden; }
+  .ocr-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--purple)); width: 0%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+  .ocr-raw-text { margin-top: 15px; padding: 10px; background: var(--bg-tertiary); font-size: 11px; color: var(--text-secondary); max-height: 150px; overflow-y: auto; display: none; }
+  .ocr-status { margin-top: 10px; font-size: 13px; color: #95d5b2; display: none; }
+  .ocr-status.error { color: #f4a0a0; }
+
+  .filter-bar { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; background: var(--bg-secondary); padding: 12px 16px; border-radius: 10px; }
+  .filter-bar input, .filter-bar select { padding: 8px 12px; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--purple); border-radius: 6px; }
+  .checkbox-label { display: flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--bg-tertiary); border-radius: 6px; cursor: pointer; border: 1px solid var(--purple); font-size: 12px; }
+  .checkbox-label.checked { background: rgba(233,69,96,0.2); border-color: var(--accent); color: var(--accent); }
+  .checkbox-label input { display: none; }
+
+  .notification { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: white; z-index: 2000; display: none; }
+  .notification.show { display: block; }
+  .notification.success { background: var(--success); }
+  .notification.error { background: var(--danger); }
+  .notification.info { background: var(--bg-tertiary); border: 1px solid var(--purple); }
+
+  .alliance-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; margin-left: 6px; background: var(--purple); color: #c4a0e8; }
+  .alliance-badge.own { background: var(--success); color: #95d5b2; }
+  .alliance-badge.hidden { background: var(--danger); color: #f4a0a0; }
+
+  .user-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: var(--bg-tertiary); border-radius: 6px; margin-bottom: 8px; border: 1px solid var(--border); }
+  .history-item { padding: 10px; background: var(--bg-tertiary); border-radius: 6px; margin-bottom: 8px; border-left: 3px solid var(--accent); font-size: 12px; }
+  .history-item .h-time { color: var(--text-secondary); font-size: 11px; }
+  .history-item .h-user { color: var(--accent); font-weight: 600; }
+
+  .privacy-info { background: rgba(83,52,131,0.2); border: 1px solid var(--purple); border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 12px; color: #c4a0e8; }
+  .privacy-info strong { color: var(--accent); }
+  .privacy-info.mode-hide { background: rgba(107,29,29,0.2); border-color: var(--danger); }
+
+  .radio-group { display: flex; gap: 10px; margin-top: 8px; }
+  .radio-label { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg-tertiary); border-radius: 6px; cursor: pointer; border: 1px solid var(--purple); font-size: 12px; }
+  .radio-label input { display: none; }
+  .radio-label.active { background: rgba(233,69,96,0.2); border-color: var(--accent); color: var(--accent); }
+
+  /* Login screen */
+  .login-screen { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary)); padding: 20px; }
+  .login-box { background: var(--bg-secondary); padding: 40px; border-radius: 12px; border: 1px solid var(--accent); max-width: 420px; width: 100%; }
+  .login-box h2 { color: var(--accent); margin-bottom: 10px; text-align: center; }
+  .login-box .subtitle { color: var(--text-secondary); text-align: center; margin-bottom: 25px; font-size: 13px; }
+  .login-box .btn { width: 100%; padding: 12px; font-size: 14px; margin-top: 8px; }
+  .login-divider { display: flex; align-items: center; gap: 10px; margin: 20px 0; color: var(--text-secondary); font-size: 12px; }
+  .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .login-error { color: #f4a0a0; font-size: 13px; text-align: center; margin-top: 10px; display: none; }
+  .login-tabs { display: flex; gap: 0; margin-bottom: 20px; border-radius: 6px; overflow: hidden; border: 1px solid var(--purple); }
+  .login-tab { flex: 1; padding: 10px; background: var(--bg-tertiary); color: var(--text-secondary); border: none; cursor: pointer; font-weight: 600; font-size: 13px; }
+  .login-tab.active { background: var(--accent); color: white; }
+
+  .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
+  .loading .spinner { border: 3px solid var(--border); border-top: 3px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  .theme-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .theme-preset { padding: 15px; border-radius: 8px; cursor: pointer; border: 2px solid var(--border); text-align: center; background: var(--bg-tertiary); }
+  .theme-preset:hover { border-color: var(--accent); }
+  .theme-preset.active { border-color: var(--accent); box-shadow: 0 0 10px rgba(233,69,96,0.3); }
+  .theme-preset .preview { width: 100%; height: 40px; border-radius: 4px; margin-bottom: 8px; }
+  .theme-preset .name { font-size: 12px; font-weight: 600; }
+
+  .color-picker-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+  .color-picker-item { display: flex; flex-direction: column; gap: 5px; }
+  .color-picker-item label { font-size: 12px; color: var(--text-secondary); }
+  .color-picker-item input[type="color"] { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; background: var(--bg-tertiary); }
+
+  @media (max-width: 768px) { .header { padding: 15px; } .header h1 { font-size: 18px; } .content { padding: 10px; } table { font-size: 10px; } }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h2>⚔️ Сравнение рейдов</h2>
+    <div class="subtitle">Войдите или продолжите как гость</div>
+    
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="switchLoginTab('login', this)">Вход</button>
+      <button class="login-tab" onclick="switchLoginTab('register', this)">Регистрация</button>
+    </div>
+
+    <div id="loginForm">
+      <div class="form-group">
+        <label>Имя пользователя</label>
+        <input type="text" id="loginUsername" placeholder="Ваше имя" onkeypress="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="form-group">
+        <label>Пароль</label>
+        <input type="password" id="loginPassword" placeholder="Пароль" onkeypress="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="login-error" id="loginError"></div>
+      <button class="btn btn-primary" onclick="doLogin()">Войти</button>
+    </div>
+
+    <div id="registerForm" style="display:none">
+      <div class="form-group">
+        <label>Имя пользователя</label>
+        <input type="text" id="regUsername" placeholder="Придумайте имя">
+      </div>
+      <div class="form-group">
+        <label>Пароль (мин. 6 символов)</label>
+        <input type="password" id="regPassword" placeholder="Пароль">
+      </div>
+      <div class="login-error" id="regError"></div>
+      <button class="btn btn-primary" onclick="doRegister()">Зарегистрироваться</button>
+    </div>
+
+    <div class="login-divider">или</div>
+
+    <button class="btn btn-guest" onclick="enterAsGuest()">👁️ Войти как гость (только просмотр)</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appContainer" style="display:none">
+  <div class="header">
+    <h1>⚔️ Сравнение рейдов <span id="currentUserBadge" style="font-size:12px;color:var(--text-secondary);margin-left:10px"></span></h1>
+    <div class="header-buttons">
+      <button class="btn btn-primary" id="addPlayerBtn" onclick="openAddPlayer()">➕ Игрока</button>
+      <button class="btn btn-secondary" onclick="exportJSON()">📥 JSON</button>
+      <button class="btn btn-secondary" onclick="exportCSV()">📊 CSV</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📤 Импорт</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      <button class="btn btn-warning" id="resetBtn" onclick="resetData()">🔄 Сброс</button>
+      <button class="btn btn-admin" id="adminBtn" style="display:none" onclick="switchTab('admin')">👑 Админ</button>
+      <button class="btn btn-secondary" onclick="openThemeSettings()">🎨 Тема</button>
+      <button class="btn btn-secondary" id="historyBtn" style="display:none" onclick="switchTab('history')">📜 История</button>
+      <button class="btn btn-secondary" id="logoutBtn" onclick="doLogout()">🚪 Выйти</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('table')">📊 Таблица</button>
+    <button class="tab" onclick="switchTab('compare')">⚔️ Сравнение</button>
+    <button class="tab" onclick="switchTab('charts')">📈 Графики</button>
+    <button class="tab" onclick="switchTab('players')">👥 Игроки</button>
+    <button class="tab" id="adminTab" style="display:none" onclick="switchTab('admin')">👑 Админ</button>
+    <button class="tab" id="historyTab" style="display:none" onclick="switchTab('history')">📜 История</button>
+  </div>
+
+  <div class="content">
+    <div id="tab-table" class="tab-content active">
+      <div id="privacyBanner" class="privacy-info" style="display:none"></div>
+      <div class="filter-bar">
+        <input type="text" id="searchFilter" placeholder="🔍 Поиск..." oninput="renderTable()" style="min-width:200px">
+        <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" id="enableHighlight" checked onchange="renderTable()">🎨 Подсветка</label>
+      </div>
+      <div class="table-container" id="mainTable"></div>
+    </div>
+
+    <div id="tab-compare" class="tab-content">
+      <div class="compare-panel">
+        <h3>⚔️ Сравнение двух игроков</h3>
+        <div class="compare-selectors">
+          <select id="comparePlayer1" onchange="renderComparison()"></select>
+          <span class="vs">VS</span>
+          <select id="comparePlayer2" onchange="renderComparison()"></select>
+        </div>
+      </div>
+      <div class="table-container" id="compareTable"></div>
+    </div>
+
+    <div id="tab-charts" class="tab-content">
+      <div class="filter-bar">
+        <select id="chartUnit" onchange="renderCharts()">
+          <option value="Пехота">Пехота</option>
+          <option value="Кавалерия">Кавалерия</option>
+          <option value="Лучники">Лучники</option>
+        </select>
+        <select id="chartStat" onchange="renderCharts()">
+          <option value="Атака">Атака</option>
+          <option value="Защита">Защита</option>
+          <option value="Смертоносность">Смертоносность</option>
+          <option value="Здоровье">Здоровье</option>
+        </select>
+      </div>
+      <div class="table-container" id="chartContainer"></div>
+    </div>
+
+    <div id="tab-players" class="tab-content">
+      <div class="compare-panel">
+        <h3>👥 Игроки</h3>
+        <button class="btn btn-primary" id="addPlayerBtn2" onclick="openAddPlayer()">➕ Добавить игрока</button>
+      </div>
+      <div id="playerList"></div>
+    </div>
+
+    <div id="tab-admin" class="tab-content">
+      <div class="compare-panel">
+        <h3>👑 Управление пользователями</h3>
+        <button class="btn btn-primary" onclick="openAddUser()">➕ Добавить пользователя</button>
+      </div>
+      <div id="userList"></div>
+    </div>
+
+    <div id="tab-history" class="tab-content">
+      <div class="compare-panel">
+        <h3>📜 История изменений</h3>
+        <button class="btn btn-secondary" onclick="exportHistory()">📥 Экспорт</button>
+        <button class="btn btn-warning" onclick="clearHistory()">🗑️ Очистить</button>
+      </div>
+      <div id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<div class="notification" id="notification"></div>
+
+<script>
+// ===== FIREBASE CONFIG =====
+const firebaseConfig = {
+  apiKey: "AIzaSyBhNwnK-QRA4fjhGQWoQpvMuEs77O3q8KI",
+  authDomain: "raid-compare.firebaseapp.com",
+  projectId: "raid-compare",
+  storageBucket: "raid-compare.firebasestorage.app",
+  messagingSenderId: "777990151888",
+  appId: "1:777990151888:web:1a9f60ecdde95a47cec8d5"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Суффикс для формирования email из имени пользователя
+const EMAIL_SUFFIX = '@raid.local';
+
+const UNITS = ['Пехота', 'Кавалерия', 'Лучники'];
+const STATS = ['Атака', 'Защита', 'Смертоносность', 'Здоровье'];
+
+// Темы
+const themes = {
+  'dark': { name: 'Тёмная', colors: { '--bg-primary':'#1a1a2e','--bg-secondary':'#16213e','--bg-tertiary':'#0f3460','--accent':'#e94560','--accent-hover':'#ff6b81','--text-primary':'#e0e0e0','--text-secondary':'#aaa','--border':'#2a2a4a','--success':'#2d6a4f','--warning':'#e76f51','--danger':'#6b1d1d','--purple':'#533483','--cell-green':'rgba(45,106,79,0.4)','--cell-yellow':'rgba(230,180,50,0.2)','--cell-red':'rgba(180,40,40,0.3)','--cell-avg':'rgba(83,52,131,0.3)' }},
+  'light': { name: 'Светлая', colors: { '--bg-primary':'#f5f5f5','--bg-secondary':'#ffffff','--bg-tertiary':'#e8e8e8','--accent':'#d32f2f','--accent-hover':'#f44336','--text-primary':'#212121','--text-secondary':'#757575','--border':'#bdbdbd','--success':'#388e3c','--warning':'#f57c00','--danger':'#c62828','--purple':'#7b1fa2','--cell-green':'rgba(56,142,60,0.2)','--cell-yellow':'rgba(245,124,0,0.15)','--cell-red':'rgba(198,40,40,0.15)','--cell-avg':'rgba(123,31,162,0.15)' }},
+  'blue': { name: 'Синяя', colors: { '--bg-primary':'#0d1b2a','--bg-secondary':'#1b263b','--bg-tertiary':'#415a77','--accent':'#00b4d8','--accent-hover':'#48cae4','--text-primary':'#e0e1dd','--text-secondary':'#adb5bd','--border':'#2a3f5f','--success':'#2d6a4f','--warning':'#e76f51','--danger':'#6b1d1d','--purple':'#7209b7','--cell-green':'rgba(45,106,79,0.4)','--cell-yellow':'rgba(230,180,50,0.2)','--cell-red':'rgba(180,40,40,0.3)','--cell-avg':'rgba(114,9,183,0.3)' }},
+  'green': { name: 'Зелёная', colors: { '--bg-primary':'#1b4332','--bg-secondary':'#2d6a4f','--bg-tertiary':'#40916c','--accent':'#95d5b2','--accent-hover':'#b7e4c7','--text-primary':'#d8f3dc','--text-secondary':'#b7e4c7','--border':'#52b788','--success':'#2d6a4f','--warning':'#e76f51','--danger':'#6b1d1d','--purple':'#74c69d','--cell-green':'rgba(149,213,178,0.3)','--cell-yellow':'rgba(230,180,50,0.2)','--cell-red':'rgba(180,40,40,0.3)','--cell-avg':'rgba(116,198,157,0.3)' }},
+  'purple': { name: 'Фиолетовая', colors: { '--bg-primary':'#240046','--bg-secondary':'#3c096c','--bg-tertiary':'#5a189a','--accent':'#e0aaff','--accent-hover':'#f0d6ff','--text-primary':'#f0e6ff','--text-secondary':'#c77dff','--border':'#7b2cbf','--success':'#2d6a4f','--warning':'#e76f51','--danger':'#6b1d1d','--purple':'#9d4edd','--cell-green':'rgba(45,106,79,0.4)','--cell-yellow':'rgba(230,180,50,0.2)','--cell-red':'rgba(180,40,40,0.3)','--cell-avg':'rgba(157,78,221,0.3)' }},
+  'cyberpunk': { name: 'Киберпанк', colors: { '--bg-primary':'#0a0a0a','--bg-secondary':'#1a1a1a','--bg-tertiary':'#2a2a2a','--accent':'#ff00ff','--accent-hover':'#ff66ff','--text-primary':'#00ffff','--text-secondary':'#ff00ff','--border':'#333333','--success':'#00ff00','--warning':'#ffff00','--danger':'#ff0000','--purple':'#9900ff','--cell-green':'rgba(0,255,0,0.2)','--cell-yellow':'rgba(255,255,0,0.15)','--cell-red':'rgba(255,0,0,0.2)','--cell-avg':'rgba(153,0,255,0.2)' }}
+};
+
+let currentTheme = 'dark';
+let customColors = {};
+let currentUser = null;
+let userData = null;
+let playersData = {};
+let historyLog = [];
+let sortState = { column: null, direction: 'desc' };
+
+// ===== THEME =====
+function applyTheme(themeName) {
+  currentTheme = themeName;
+  const theme = themes[themeName];
+  if (!theme) return;
+  Object.keys(theme.colors).forEach(key => document.documentElement.style.setProperty(key, theme.colors[key]));
+  localStorage.setItem('raidTheme', themeName);
+  localStorage.removeItem('raidCustomColors');
+  customColors = {};
+}
+function applyCustomColors(colors) {
+  customColors = colors;
+  Object.keys(colors).forEach(key => document.documentElement.style.setProperty(key, colors[key]));
+  localStorage.setItem('raidCustomColors', JSON.stringify(colors));
+  currentTheme = 'custom';
+}
+function loadTheme() {
+  const savedTheme = localStorage.getItem('raidTheme');
+  const savedCustom = localStorage.getItem('raidCustomColors');
+  if (savedCustom) { try { customColors = JSON.parse(savedCustom); applyCustomColors(customColors); } catch(e) { applyTheme(savedTheme || 'dark'); } }
+  else { applyTheme(savedTheme || 'dark'); }
+}
+
+// ===== LOGIN =====
+function switchLoginTab(tab, el) {
+  document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+}
+
+async function doLogin() {
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  
+  if (!username || !password) { errEl.textContent = 'Введите имя и пароль'; errEl.style.display = 'block'; return; }
+  
+  const email = username + EMAIL_SUFFIX;
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    errEl.style.display = 'none';
+  } catch (error) {
+    let msg = 'Ошибка входа';
+    if (error.code === 'auth/user-not-found') msg = 'Пользователь не найден';
+    else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') msg = 'Неверный пароль';
+    else if (error.code === 'auth/invalid-email') msg = 'Недопустимое имя (только буквы, цифры)';
+    else msg = error.message;
+    errEl.textContent = msg;
+    errEl.style.display = 'block';
+  }
+}
+
+async function doRegister() {
+  const username = document.getElementById('regUsername').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const errEl = document.getElementById('regError');
+  
+  if (!username || !password) { errEl.textContent = 'Заполните все поля'; errEl.style.display = 'block'; return; }
+  if (password.length < 6) { errEl.textContent = 'Пароль должен быть минимум 6 символов'; errEl.style.display = 'block'; return; }
+  if (!/^[a-zA-Zа-яА-Я0-9_\-]+$/.test(username)) { errEl.textContent = 'Имя может содержать только буквы, цифры, _ и -'; errEl.style.display = 'block'; return; }
+  
+  const email = username + EMAIL_SUFFIX;
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+    await db.collection('users').doc(cred.user.uid).set({
+      username: username,
+      role: 'viewer',
+      visibleAlliances: [],
+      visibilityMode: 'show',
+      created: new Date().toISOString()
+    });
+    errEl.style.display = 'none';
+    notify('Регистрация успешна!', 'success');
+  } catch (error) {
+    let msg = 'Ошибка регистрации';
+    if (error.code === 'auth/email-already-in-use') msg = 'Это имя уже занято';
+    else if (error.code === 'auth/weak-password') msg = 'Слишком простой пароль';
+    else msg = error.message;
+    errEl.textContent = msg;
+    errEl.style.display = 'block';
+  }
+}
+
+async function enterAsGuest() {
+  try {
+    await auth.signInAnonymously();
+    notify('Вы вошли как гость', 'info');
+  } catch (error) {
+    notify('Ошибка: ' + error.message, 'error');
+  }
+}
+
+async function doLogout() {
+  await auth.signOut();
+}
+
+// ===== AUTH STATE =====
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    currentUser = user;
+    await loadUserData();
+    await loadPlayersData();
+    await loadHistory();
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'block';
+    updateUI();
+    renderTable();
+  } else {
+    currentUser = null;
+    userData = null;
+    playersData = {};
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('appContainer').style.display = 'none';
+  }
+});
+
+async function loadUserData() {
+  if (!currentUser) return;
+  try {
+    if (currentUser.isAnonymous) {
+      userData = { username: 'Гость', role: 'guest', visibleAlliances: [], visibilityMode: 'show' };
+      return;
+    }
+    const doc = await db.collection('users').doc(currentUser.uid).get();
+    if (doc.exists) {
+      userData = doc.data();
+    } else {
+      // Миграция: создаём профиль из email
+      const username = currentUser.email ? currentUser.email.replace(EMAIL_SUFFIX, '') : 'User';
+      userData = { username, role: 'viewer', visibleAlliances: [], visibilityMode: 'show', created: new Date().toISOString() };
+      await db.collection('users').doc(currentUser.uid).set(userData);
+    }
+  } catch (error) {
+    console.error('Error loading user:', error);
+    userData = { username: 'User', role: 'viewer', visibleAlliances: [], visibilityMode: 'show' };
+  }
+}
+
+function updateUI() {
+  if (!currentUser || !userData) return;
+  const roleLabel = userData.role === 'admin' ? 'админ' : userData.role === 'editor' ? 'редактор' : userData.role === 'guest' ? 'гость' : 'просмотр';
+  document.getElementById('currentUserBadge').textContent = `${userData.username} (${roleLabel})`;
+  
+  const isAdmin = userData.role === 'admin';
+  const canEdit = userData.role === 'editor' || userData.role === 'admin';
+  
+  document.getElementById('adminBtn').style.display = isAdmin ? 'inline-block' : 'none';
+  document.getElementById('adminTab').style.display = isAdmin ? 'inline-block' : 'none';
+  document.getElementById('historyBtn').style.display = canEdit ? 'inline-block' : 'none';
+  document.getElementById('historyTab').style.display = canEdit ? 'inline-block' : 'none';
+  document.getElementById('addPlayerBtn').style.display = canEdit ? 'inline-block' : 'none';
+  document.getElementById('addPlayerBtn2').style.display = canEdit ? 'inline-block' : 'none';
+  document.getElementById('resetBtn').style.display = canEdit ? 'inline-block' : 'none';
+  
+  const banner = document.getElementById('privacyBanner');
+  const alliances = userData.visibleAlliances || [];
+  const mode = userData.visibilityMode || 'show';
+  if (alliances.length > 0 && userData.role !== 'admin') {
+    banner.style.display = 'block';
+    if (mode === 'hide') {
+      banner.className = 'privacy-info mode-hide';
+      banner.innerHTML = `<strong>🔒 Скрыты альянсы:</strong> ${alliances.join(', ')}`;
+    } else {
+      banner.className = 'privacy-info';
+      banner.innerHTML = `<strong>👁️ Видны только:</strong> ${alliances.join(', ')}`;
+    }
+  } else { banner.style.display = 'none'; }
+}
+
+// ===== FIREBASE DATA =====
+async function loadPlayersData() {
+  try {
+    const snapshot = await db.collection('players').get();
+    playersData = {};
+    snapshot.forEach(doc => { playersData[doc.id] = doc.data(); });
+    return playersData;
+  } catch (error) { console.error(error); notify('Ошибка загрузки', 'error'); return {}; }
+}
+
+async function savePlayerData(name, playerData) {
+  try {
+    await db.collection('players').doc(name).set(playerData);
+    playersData[name] = playerData;
+    return true;
+  } catch (error) { console.error(error); notify('Ошибка сохранения', 'error'); return false; }
+}
+
+async function deletePlayerData(name) {
+  try {
+    await db.collection('players').doc(name).delete();
+    delete playersData[name];
+    return true;
+  } catch (error) { console.error(error); notify('Ошибка удаления', 'error'); return false; }
+}
+
+async function loadHistory() {
+  try {
+    const snapshot = await db.collection('history').orderBy('time', 'desc').limit(500).get();
+    historyLog = [];
+    snapshot.forEach(doc => { historyLog.push(doc.data()); });
+  } catch (error) { console.error(error); historyLog = []; }
+}
+
+async function addHistory(action, details) {
+  if (!currentUser || userData?.role === 'guest') return;
+  const entry = {
+    time: new Date().toISOString(),
+    user: userData?.username || 'Unknown',
+    action, details
+  };
+  try {
+    await db.collection('history').add(entry);
+    historyLog.unshift(entry);
+  } catch (error) { console.error(error); }
+}
+
+// ===== UI =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'compare') { populateCompareSelects(); renderComparison(); }
+  if (tab === 'charts') renderCharts();
+  if (tab === 'players') renderPlayerList();
+  if (tab === 'admin') renderAdmin();
+  if (tab === 'history') renderHistory();
+  if (tab === 'table') renderTable();
+}
+
+function toggleCheckbox(label) { setTimeout(() => { const cb = label.querySelector('input'); label.classList.toggle('checked', cb.checked); }, 0); }
+
+function isPlayerVisible(playerName) {
+  if (userData?.role === 'admin') return true;
+  const player = playersData[playerName];
+  if (!player) return false;
+  const playerAlliance = player.Альянс || '';
+  const userAlliances = userData?.visibleAlliances || [];
+  const mode = userData?.visibilityMode || 'show';
+  if (userAlliances.length === 0) return true;
+  if (mode === 'show') { if (!playerAlliance) return true; return userAlliances.includes(playerAlliance); }
+  else { if (!playerAlliance) return true; return !userAlliances.includes(playerAlliance); }
+}
+
+function getVisiblePlayers() { return Object.keys(playersData).filter(isPlayerVisible); }
+
+function getCellClass(value, avg) {
+  if (avg === 0) return '';
+  const ratio = value / avg;
+  if (ratio >= 1.1) return 'cell-green';
+  if (ratio >= 0.95) return 'cell-yellow';
+  return 'cell-red';
+}
+
+function getAlliances() { const alliances = new Set(); Object.values(playersData).forEach(p => { if (p.Альянс) alliances.add(p.Альянс); }); return [...alliances].sort(); }
+
+function renderTable() {
+  const search = document.getElementById('searchFilter').value.toLowerCase();
+  const highlight = document.getElementById('enableHighlight').checked;
+  const players = getVisiblePlayers().filter(p => p.toLowerCase().includes(search));
+
+  if (sortState.column) {
+    players.sort((a, b) => {
+      let va, vb;
+      if (sortState.column === 'name') { va = a; vb = b; }
+      else if (sortState.column === 'total') { va = 0; vb = 0; UNITS.forEach(u => STATS.forEach(s => { va += playersData[a]?.[u]?.[s]||0; vb += playersData[b]?.[u]?.[s]||0; })); }
+      else { const [unit, stat] = sortState.column.split('|'); va = playersData[a]?.[unit]?.[stat]||0; vb = playersData[b]?.[unit]?.[stat]||0; }
+      return sortState.direction === 'asc' ? (typeof va === 'string' ? va.localeCompare(vb) : va - vb) : (typeof va === 'string' ? vb.localeCompare(va) : vb - va);
+    });
+  }
+
+  let html = '<table><thead><tr>';
+  html += `<th class="row-header" onclick="sortTable('name')">Игрок ${getSortArrow('name')}</th>`;
+  html += `<th onclick="sortTable('alliance')">Альянс ${getSortArrow('alliance')}</th>`;
+  UNITS.forEach(unit => { STATS.forEach(stat => { const colKey = unit+'|'+stat; html += `<th onclick="sortTable('${colKey}')">${unit}<br>${stat} ${getSortArrow(colKey)}</th>`; });});
+  html += `<th onclick="sortTable('total')">Σ ${getSortArrow('total')}</th>`;
+  html += '</tr></thead><tbody>';
+
+  const allValues = {};
+  UNITS.forEach(unit => { STATS.forEach(stat => { allValues[unit+'|'+stat] = players.map(p => playersData[p]?.[unit]?.[stat]||0); }); });
+
+  players.forEach(p => {
+    const alliance = playersData[p].Альянс || '';
+    html += `<tr><td class="row-header" style="cursor:pointer" onclick="openEditPlayer('${p}')">${p}${alliance?`<span class="alliance-badge">${alliance}</span>`:''}</td>`;
+    html += `<td>${alliance||'-'}</td>`;
+    let totalSum = 0;
+    UNITS.forEach(unit => { STATS.forEach(stat => {
+      const v = playersData[p]?.[unit]?.[stat]||0;
+      const avg = allValues[unit+'|'+stat].reduce((a,b)=>a+b,0)/allValues[unit+'|'+stat].length;
+      let cls = '';
+      if (highlight) cls = getCellClass(v, avg);
+      html += `<td class="${cls}">${v}</td>`;
+      totalSum += v;
+    });});
+    html += `<td>${totalSum}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  const tc = document.getElementById('mainTable');
+  tc.innerHTML = html;
+  tc.classList.toggle('highlight-on', highlight);
+}
+
+function getSortArrow(colKey) { return sortState.column === colKey ? (sortState.direction === 'asc' ? '▲' : '▼') : ''; }
+function sortTable(colKey) { if (sortState.column === colKey) sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc'; else { sortState.column = colKey; sortState.direction = 'desc'; } renderTable(); }
+
+function populateCompareSelects() {
+  const names = getVisiblePlayers().sort();
+  document.getElementById('comparePlayer1').innerHTML = names.map((n,i)=>`<option value="${n}" ${i===0?'selected':''}>${n}</option>`).join('');
+  document.getElementById('comparePlayer2').innerHTML = names.map((n,i)=>`<option value="${n}" ${i===Math.min(1,names.length-1)?'selected':''}>${n}</option>`).join('');
+}
+
+function renderComparison() {
+  const p1 = document.getElementById('comparePlayer1').value;
+  const p2 = document.getElementById('comparePlayer2').value;
+  if (!p1||!p2) return;
+  let html = '<table><thead><tr><th class="row-header">Параметр</th><th>'+p1+'</th><th>'+p2+'</th><th>Разница</th><th>%</th></tr></thead><tbody>';
+  let total1=0,total2=0;
+  UNITS.forEach(unit => { html += `<tr><td class="unit-header" colspan="5">${unit}</td></tr>`; STATS.forEach(stat => { const v1=playersData[p1]?.[unit]?.[stat]||0, v2=playersData[p2]?.[unit]?.[stat]||0; const diff=v1-v2, pct=v2>0?((v1/v2-1)*100).toFixed(1):0; const cls=diff>0?'diff-positive':diff<0?'diff-negative':''; const sign=diff>0?'+':''; total1+=v1; total2+=v2; html += `<tr><td class="row-header">${stat}</td><td>${v1}</td><td>${v2}</td><td class="${cls}">${sign}${diff}</td><td class="${cls}">${sign}${pct}%</td></tr>`; });});
+  const td=total1-total2, tp=total2>0?((total1/total2-1)*100).toFixed(1):0; const tc=td>0?'diff-positive':td<0?'diff-negative':''; const ts=td>0?'+':'';
+  html += `<tr style="font-weight:700"><td class="row-header">Итого</td><td>${total1}</td><td>${total2}</td><td class="${tc}">${ts}${td}</td><td class="${tc}">${ts}${tp}%</td></tr></tbody></table>`;
+  document.getElementById('compareTable').innerHTML = html;
+}
+
+function renderCharts() {
+  const unit = document.getElementById('chartUnit').value;
+  const stat = document.getElementById('chartStat').value;
+  const players = getVisiblePlayers().sort();
+  const values = players.map(p => playersData[p]?.[unit]?.[stat]||0);
+  const maxVal = Math.max(...values);
+  let html = `<h3 style="color:var(--accent);margin-bottom:15px">${unit} — ${stat}</h3><div style="display:flex;align-items:flex-end;gap:4px;height:200px;padding:10px 0;border-bottom:2px solid #333">`;
+  values.forEach((v,i) => { const h = maxVal>0?(v/maxVal*180):0; html += `<div style="flex:1;min-width:20px;height:${h}px;background:linear-gradient(to top,var(--accent),var(--purple));border-radius:4px 4px 0 0;position:relative" title="${players[i]}: ${v}"><div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--accent);font-weight:700">${v}</div><div style="position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--text-secondary);white-space:nowrap">${players[i].substring(0,8)}</div></div>`; });
+  html += '</div><div style="height:25px"></div>';
+  document.getElementById('chartContainer').innerHTML = html;
+}
+
+function renderPlayerList() {
+  const names = getVisiblePlayers().sort();
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:15px">';
+  names.forEach(name => { let total = 0; UNITS.forEach(u => STATS.forEach(s => { total += playersData[name]?.[u]?.[s]||0; })); const alliance = playersData[name].Альянс||''; html += `<div style="background:var(--bg-tertiary);border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border)"><div><div style="font-weight:600">${name}${alliance?`<span class="alliance-badge">${alliance}</span>`:''}</div><div style="font-size:11px;color:var(--text-secondary)">Σ ${total}</div></div><div style="display:flex;gap:5px">${userData && (userData.role === 'editor' || userData.role === 'admin') ? `<button class="btn btn-secondary" onclick="openEditPlayer('${name}')">✏️</button><button class="btn btn-danger" onclick="deletePlayer('${name}')">🗑️</button>` : ''}</div></div>`; });
+  html += '</div>';
+  document.getElementById('playerList').innerHTML = html;
+}
+
+// ===== PLAYER MODAL =====
+let ocrImageFile = null;
+function openAddPlayer() { if (!userData || userData.role === 'guest' || userData.role === 'viewer') { notify('Нет прав', 'error'); return; } openPlayerModal(null); }
+function openEditPlayer(name) { if (!userData || userData.role === 'guest' || userData.role === 'viewer') { notify('Нет прав', 'error'); return; } openPlayerModal(name); }
+
+function openPlayerModal(editName) {
+  const isEdit = editName !== null;
+  const player = isEdit ? playersData[editName] : null;
+  let html = `<h2>${isEdit?'✏️ Редактировать':'➕ Добавить'} игрока</h2>`;
+  html += `<div class="ocr-section"><h4>📷 Распознать скриншот</h4><div class="ocr-dropzone" id="ocrDropzone" onclick="document.getElementById('ocrFileInput').click()"><div style="font-size:40px">📸</div><div>Нажмите или перетащите скриншот</div></div><input type="file" id="ocrFileInput" accept="image/*" style="display:none" onchange="handleOcrFile(event)"><img class="ocr-preview" id="ocrPreview"><div class="ocr-progress" id="ocrProgress"><div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocrProgressFill">0%</div></div></div><div class="ocr-status" id="ocrStatus"></div><div class="ocr-raw-text" id="ocrRawText"></div></div>`;
+  html += `<div class="form-group"><label>Имя игрока</label><input type="text" id="playerName" value="${isEdit?editName:''}" placeholder="Имя"></div>`;
+  html += `<div class="form-group"><label>Альянс</label><input type="text" id="alliance" value="${player?.Альянс||''}" placeholder="Название альянса"></div>`;
+  UNITS.forEach(unit => { html += `<div class="form-section"><h4>${unit}</h4><div class="form-row">`; STATS.forEach(stat => { const val = player?.[unit]?.[stat] ?? ''; html += `<div class="form-group"><label>${stat}</label><input type="number" id="${unit}_${stat}" value="${val}" placeholder="0" step="0.1"></div>`; }); html += '</div></div>'; });
+  html += `<div class="form-section"><h4>📦 Прочее</h4><div class="form-row" style="grid-template-columns:1fr 2fr"><div class="form-group"><label>Вместимость</label><input type="number" id="capacity" value="${player?.ВместимостьРейда||''}" placeholder="0"></div><div class="form-group"><label>📝 Заметки</label><textarea id="notes" placeholder="Комментарий...">${player?.Заметки||''}</textarea></div></div></div>`;
+  html += `<div class="modal-buttons"><button class="btn btn-secondary" onclick="closeModal()">Отмена</button><button class="btn btn-primary" onclick="savePlayer('${isEdit?editName:''}')">${isEdit?'💾 Сохранить':'➕ Добавить'}</button></div>`;
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('show');
+  setupDragDrop();
+}
+
+function setupDragDrop() { const dz = document.getElementById('ocrDropzone'); if (!dz) return; dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor = 'var(--accent)'; }); dz.addEventListener('dragleave', () => { dz.style.borderColor = 'var(--purple)'; }); dz.addEventListener('drop', e => { e.preventDefault(); dz.style.borderColor = 'var(--purple)'; const f=e.dataTransfer.files[0]; if(f) processOcrFile(f); }); }
+function handleOcrFile(event) { const f=event.target.files[0]; if(f) processOcrFile(f); }
+function processOcrFile(file) { ocrImageFile = file; const preview = document.getElementById('ocrPreview'); preview.src = URL.createObjectURL(file); preview.style.display = 'block'; runOCR(file); }
+
+async function runOCR(file) {
+  const progressFill = document.getElementById('ocrProgressFill');
+  const status = document.getElementById('ocrStatus');
+  const rawText = document.getElementById('ocrRawText');
+  document.getElementById('ocrProgress').style.display = 'block';
+  try {
+    const result = await Tesseract.recognize(file, 'rus+eng', { logger: m => { if (m.status === 'recognizing text') { const pct = Math.round(m.progress*100); progressFill.style.width = pct+'%'; progressFill.textContent = pct+'%'; } } });
+    const raw = result.data.text;
+    rawText.textContent = raw; rawText.style.display = 'block';
+    const parsed = parseOcrText(raw);
+    const filledCount = applyParsedData(parsed);
+    status.textContent = filledCount > 0 ? `✅ Распознано: ${filledCount}/12` : '⚠️ Не удалось распознать';
+    status.className = filledCount > 0 ? 'ocr-status' : 'ocr-status error';
+    status.style.display = 'block';
+  } catch (err) { status.textContent = '❌ ' + err.message; status.className = 'ocr-status error'; status.style.display = 'block'; }
+}
+
+function parseOcrText(text) {
+  const parsed = { 'Пехота': {}, 'Кавалерия': {}, 'Лучники': {} };
+  const pattern = /\+([+-]?\d+[.,]?\d*)\s*%/g;
+  const matches = [];
+  let match;
+  while ((match = pattern.exec(text)) !== null) { const val = parseFloat(match[1].replace(',', '.')); if (val > 0 && val < 10000) matches.push(val); }
+  const order = [['Пехота', 'Атака'], ['Пехота', 'Защита'], ['Пехота', 'Смертоносность'], ['Пехота', 'Здоровье'], ['Кавалерия', 'Атака'], ['Кавалерия', 'Защита'], ['Кавалерия', 'Смертоносность'], ['Кавалерия', 'Здоровье'], ['Лучники', 'Атака'], ['Лучники', 'Защита'], ['Лучники', 'Смертоносность'], ['Лучники', 'Здоровье']];
+  for (let i = 0; i < Math.min(matches.length, 24); i += 2) { const idx = i / 2; if (idx < order.length) { const [unit, stat] = order[idx]; if (!parsed[unit][stat]) parsed[unit][stat] = matches[i]; } }
+  return parsed;
+}
+
+function applyParsedData(parsed) { let count = 0; UNITS.forEach(unit => { STATS.forEach(stat => { if (parsed[unit]?.[stat] !== undefined) { const input = document.getElementById(`${unit}_${stat}`); if (input) { input.value = parsed[unit][stat]; count++; } } });}); return count; }
+
+async function savePlayer(editName) {
+  if (!userData || userData.role === 'guest' || userData.role === 'viewer') { notify('Нет прав', 'error'); return; }
+  const name = document.getElementById('playerName').value.trim();
+  if (!name) { notify('Введите имя!', 'error'); return; }
+  if (!editName && playersData[name]) { notify('Игрок уже существует!', 'error'); return; }
+  if (editName && name !== editName && playersData[name]) { notify('Имя занято!', 'error'); return; }
+
+  const playerData = { ВместимостьРейда:0, Заметки:'', Альянс:'' };
+  UNITS.forEach(unit => { playerData[unit] = {}; STATS.forEach(stat => { playerData[unit][stat] = parseFloat(document.getElementById(`${unit}_${stat}`).value)||0; }); });
+  playerData.ВместимостьРейда = parseFloat(document.getElementById('capacity').value)||0;
+  playerData.Заметки = document.getElementById('notes').value.trim();
+  playerData.Альянс = document.getElementById('alliance').value.trim();
+
+  if (editName && name !== editName) await deletePlayerData(editName);
+  await savePlayerData(name, playerData);
+  await addHistory(editName ? 'Редактирование игрока' : 'Добавление игрока', name);
+  closeModal();
+  notify(`Игрок "${name}" ${editName?'обновлён':'добавлен'}!`, 'success');
+  renderTable();
+  renderPlayerList();
+}
+
+async function deletePlayer(name) {
+  if (!userData || userData.role === 'guest' || userData.role === 'viewer') { notify('Нет прав', 'error'); return; }
+  if (confirm(`Удалить "${name}"?`)) {
+    await deletePlayerData(name);
+    await addHistory('Удаление игрока', name);
+    renderTable();
+    renderPlayerList();
+  }
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); ocrImageFile = null; }
+
+function exportJSON() { const blob = new Blob([JSON.stringify(playersData,null,2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'raid_data_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); notify('JSON экспортирован!', 'success'); }
+function exportCSV() { let csv = 'Игрок;Альянс;'; UNITS.forEach(u => STATS.forEach(s => { csv += `${u}-${s};`; })); csv += 'Сумма\n'; getVisiblePlayers().sort().forEach(name => { csv += `${name};${playersData[name].Альянс||''};`; let total = 0; UNITS.forEach(u => STATS.forEach(s => { const v = playersData[name]?.[u]?.[s]||0; csv += `${v};`; total += v; })); csv += `${total}\n`; }); const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'raid_data_'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); notify('CSV экспортирован!', 'success'); }
+
+async function importData(event) {
+  if (!userData || userData.role === 'guest' || userData.role === 'viewer') { notify('Нет прав', 'error'); return; }
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (confirm('Заменить данные? (Отмена = добавить)')) {
+        const oldPlayers = Object.keys(playersData);
+        for (const p of oldPlayers) { await db.collection('players').doc(p).delete(); }
+        playersData = {};
+      }
+      for (const [name, data] of Object.entries(imported)) { await db.collection('players').doc(name).set(data); playersData[name] = data; }
+      await addHistory('Импорт данных', Object.keys(imported).length + ' игроков');
+      renderTable();
+      notify('Импортировано!', 'success');
+    } catch(err) { notify('Ошибка: '+err.message, 'error'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+async function resetData() {
+  if (!userData || userData.role === 'guest' || userData.role === 'viewer') { notify('Нет прав', 'error'); return; }
+  if (confirm('Сбросить все данные?')) {
+    const players = Object.keys(playersData);
+    for (const p of players) { await db.collection('players').doc(p).delete(); }
+    playersData = {};
+    await addHistory('Сброс данных', 'все игроки');
+    renderTable();
+    notify('Сброшено', 'info');
+  }
+}
+
+// ===== ADMIN =====
+function renderAdmin() {
+  if (!userData || userData.role !== 'admin') { document.getElementById('userList').innerHTML = '<p style="color:#f4a0a0">Доступ только для админа</p>'; return; }
+  db.collection('users').get().then(snapshot => {
+    let html = '';
+    snapshot.forEach(doc => {
+      const u = doc.data();
+      const isMe = doc.id === currentUser.uid;
+      html += `<div class="user-item"><div><div style="font-weight:600">${u.username || u.email || 'Unknown'} ${isMe?'<span style="color:#95d5b2;font-size:11px">(вы)</span>':''}</div><div style="font-size:11px;color:var(--text-secondary)">${u.role} · ${u.email || 'аноним'}</div></div><div style="display:flex;gap:5px"><button class="btn btn-secondary" onclick="editUserRole('${doc.id}')">✏️</button>${!isMe ? `<button class="btn btn-danger" onclick="deleteUser('${doc.id}')">🗑️</button>` : ''}</div></div>`;
+    });
+    document.getElementById('userList').innerHTML = html;
+  });
+}
+
+function openAddUser() {
+  let html = `<h2>➕ Добавить пользователя</h2>
+    <div class="form-group"><label>Имя пользователя</label><input type="text" id="newUsername" placeholder="Имя"></div>
+    <div class="form-group"><label>Пароль</label><input type="password" id="newUserPassword" placeholder="Пароль"></div>
+    <div class="form-group"><label>Роль</label><select id="newUserRole"><option value="viewer">👁️ Просмотр</option><option value="editor">✏️ Редактор</option><option value="admin">👑 Админ</option></select></div>
+    <div class="modal-buttons"><button class="btn btn-secondary" onclick="closeModal()">Отмена</button><button class="btn btn-primary" onclick="createUser()">Создать</button></div>`;
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+async function createUser() {
+  const username = document.getElementById('newUsername').value.trim();
+  const password = document.getElementById('newUserPassword').value;
+  const role = document.getElementById('newUserRole').value;
+  if (!username || !password) { notify('Заполните все поля', 'error'); return; }
+  if (password.length < 6) { notify('Пароль минимум 6 символов', 'error'); return; }
+  try {
+    const email = username + EMAIL_SUFFIX;
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+    await db.collection('users').doc(cred.user.uid).set({
+      username, role, visibleAlliances: [], visibilityMode: 'show',
+      created: new Date().toISOString()
+    });
+    await auth.signOut();
+    closeModal();
+    notify('Пользователь создан! Войдите под его аккаунтом.', 'success');
+  } catch (error) {
+    let msg = error.message;
+    if (error.code === 'auth/email-already-in-use') msg = 'Это имя уже занято';
+    notify('Ошибка: ' + msg, 'error');
+  }
+}
+
+async function editUserRole(userId) {
+  const doc = await db.collection('users').doc(userId).get();
+  const u = doc.data();
+  const alliances = getAlliances();
+  let html = `<h2>✏️ Редактировать пользователя</h2>
+    <div class="form-group"><label>Имя</label><input type="text" id="editUsername" value="${u.username||''}" readonly></div>
+    <div class="form-group"><label>Роль</label><select id="editUserRole"><option value="viewer" ${u.role==='viewer'?'selected':''}>👁️ Просмотр</option><option value="editor" ${u.role==='editor'?'selected':''}>✏️ Редактор</option><option value="admin" ${u.role==='admin'?'selected':''}>👑 Админ</option></select></div>
+    <div class="form-group"><label>🔒 Приватность альянсов</label>
+      <div class="radio-group">
+        <label class="radio-label ${(u.visibilityMode!=='hide')?'active':''}" onclick="setVisMode('show')"><input type="radio" name="visMode" value="show" ${(u.visibilityMode!=='hide')?'checked':''}> 👁️ Видит только отмеченные</label>
+        <label class="radio-label ${(u.visibilityMode==='hide')?'active':''}" onclick="setVisMode('hide')"><input type="radio" name="visMode" value="hide" ${(u.visibilityMode==='hide')?'checked':''}> 🙈 Скрывает отмеченные</label>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:var(--bg-tertiary);border-radius:6px;border:1px solid var(--purple);margin-top:10px">`;
+  if (alliances.length === 0) html += `<span style="color:var(--text-secondary);font-size:12px">Нет альянсов в базе</span>`;
+  else alliances.forEach(a => { const checked = (u.visibleAlliances||[]).includes(a)?'checked':''; html += `<label class="checkbox-label ${checked?'checked':''}" onclick="toggleCheckbox(this)"><input type="checkbox" value="${a}" class="alliance-checkbox" ${checked}> ${a}</label>`; });
+  html += `</div></div>
+    <div class="modal-buttons"><button class="btn btn-secondary" onclick="closeModal()">Отмена</button><button class="btn btn-primary" onclick="saveUserRole('${userId}')">Сохранить</button></div>`;
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function setVisMode(mode) { document.querySelectorAll('.radio-label').forEach(l => l.classList.remove('active')); event.target.closest('.radio-label').classList.add('active'); }
+
+async function saveUserRole(userId) {
+  const role = document.getElementById('editUserRole').value;
+  const visMode = document.querySelector('input[name="visMode"]:checked')?.value || 'show';
+  const visibleAlliances = [];
+  document.querySelectorAll('.alliance-checkbox:checked').forEach(cb => visibleAlliances.push(cb.value));
+  await db.collection('users').doc(userId).update({ role, visibilityMode: visMode, visibleAlliances });
+  closeModal();
+  notify('Сохранено', 'success');
+  renderAdmin();
+  await loadUserData();
+  updateUI();
+  renderTable();
+}
+
+async function deleteUser(userId) {
+  if (confirm('Удалить пользователя?')) {
+    await db.collection('users').doc(userId).delete();
+    notify('Удалено', 'info');
+    renderAdmin();
+  }
+}
+
+// ===== HISTORY =====
+function renderHistory() {
+  if (historyLog.length === 0) { document.getElementById('historyList').innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:40px">История пуста</p>'; return; }
+  let html = '';
+  historyLog.forEach(h => { const d = new Date(h.time); html += `<div class="history-item"><div class="h-time">${d.toLocaleString('ru-RU')}</div><div><span class="h-user">${h.user}</span> — ${h.action}</div><div>${h.details}</div></div>`; });
+  document.getElementById('historyList').innerHTML = html;
+}
+
+function exportHistory() { const blob = new Blob([JSON.stringify(historyLog,null,2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'raid_history_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); }
+
+async function clearHistory() {
+  if (confirm('Очистить историю?')) {
+    const batch = db.batch();
+    const snapshot = await db.collection('history').get();
+    snapshot.docs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+    historyLog = [];
+    renderHistory();
+    notify('История очищена', 'info');
+  }
+}
+
+// ===== THEME =====
+function openThemeSettings() {
+  let html = `<h2>🎨 Настройка темы</h2>`;
+  html += `<div class="form-section"><h4>Готовые темы</h4><div class="theme-presets">`;
+  Object.keys(themes).forEach(key => { const theme = themes[key]; const isActive = currentTheme === key; html += `<div class="theme-preset ${isActive?'active':''}" onclick="applyTheme('${key}'); openThemeSettings();"><div class="preview" style="background: linear-gradient(135deg, ${theme.colors['--bg-primary']}, ${theme.colors['--accent']})"></div><div class="name">${theme.name}</div></div>`; });
+  html += `</div></div>`;
+  html += `<div class="form-section"><h4>🎨 Кастомные цвета</h4><div class="color-picker-group">`;
+  const colorLabels = { '--bg-primary':'Основной фон','--bg-secondary':'Фон панелей','--bg-tertiary':'Фон элементов','--accent':'Акцент','--text-primary':'Основной текст','--text-secondary':'Вторичный текст','--border':'Границы','--cell-green':'Выше среднего','--cell-yellow':'Около среднего','--cell-red':'Ниже среднего' };
+  const currentColors = currentTheme === 'custom' ? customColors : themes[currentTheme].colors;
+  Object.keys(colorLabels).forEach(key => { const value = currentColors[key] || '#000000'; html += `<div class="color-picker-item"><label>${colorLabels[key]}</label><input type="color" value="${value.startsWith('#') ? value : '#000000'}" onchange="updateCustomColor('${key}', this.value)"></div>`; });
+  html += `</div></div>`;
+  html += `<div class="modal-buttons"><button class="btn btn-secondary" onclick="closeModal()">Закрыть</button><button class="btn btn-warning" onclick="applyTheme('dark'); openThemeSettings();">Сбросить</button></div>`;
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function updateCustomColor(key, value) {
+  if (currentTheme !== 'custom') customColors = {...themes[currentTheme].colors};
+  customColors[key] = value;
+  applyCustomColors(customColors);
+}
+
+function notify(msg, type='info') { const n = document.getElementById('notification'); n.textContent = msg; n.className = 'notification show ' + type; setTimeout(() => { n.className = 'notification'; }, 3000); }
+
+document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+
+loadTheme();
+</script>
+</body>
+</html>
