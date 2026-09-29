@@ -179,14 +179,14 @@
       <button class="btn btn-primary" onclick="doRegister()">Зарегистрироваться</button>
     </div>
     <div class="login-divider">или</div>
-    <button class="btn btn-guest" onclick="enterAsGuest()">️ Войти как гость (только просмотр)</button>
+    <button class="btn btn-guest" onclick="enterAsGuest()">👁️ Войти как гость (только просмотр)</button>
   </div>
 </div>
 
 <!-- APP -->
 <div id="appContainer" style="display:none">
   <div class="header">
-    <h1>⚔️ Сравнение рейдов <span id="currentUserBadge" style="font-size:12px;color:var(--text-secondary);margin-left:10px"></span></h1>
+    <h1>️ Сравнение рейдов <span id="currentUserBadge" style="font-size:12px;color:var(--text-secondary);margin-left:10px"></span></h1>
     <div class="header-buttons">
       <button class="btn btn-secondary" onclick="openThemeSettings()">🎨 Тема</button>
       <button class="btn btn-secondary" id="logoutBtn" onclick="doLogout()">🚪 Выйти</button>
@@ -194,7 +194,7 @@
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('table')"> Таблица</button>
+    <button class="tab active" onclick="switchTab('table')">📊 Таблица</button>
     <button class="tab" onclick="switchTab('compare')">⚔️ Сравнение</button>
     <button class="tab" onclick="switchTab('charts')">📈 Графики</button>
     <button class="tab" onclick="switchTab('players')">👥 Игроки</button>
@@ -216,19 +216,12 @@
           <span class="filter-group-title">Юниты:</span>
           <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Пехота" checked onchange="renderTable()">🛡️ Пехота</label>
           <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Кавалерия" checked onchange="renderTable()">🐴 Кавалерия</label>
-          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Лучники" checked onchange="renderTable()">🏹 Лучники</label>
-        </div>
-        <div class="filter-row">
+          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Лучники" checked onchange="renderTable()"> Лучники</label>
           <span class="filter-group-title">Статы:</span>
           <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Атака" checked onchange="renderTable()">⚔️ Атака</label>
-          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Защита" checked onchange="renderTable()">️ Защита</label>
-          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Смертоносность" checked onchange="renderTable()">💀 Смерт.</label>
+          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Защита" checked onchange="renderTable()">🛡️ Защита</label>
+          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Смертоносность" checked onchange="renderTable()"> Смерт.</label>
           <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Здоровье" checked onchange="renderTable()">❤️ Здоровье</label>
-        </div>
-        <div class="filter-row">
-          <span class="filter-group-title">Комбо:</span>
-          <label class="checkbox-label" onclick="toggleCombo(this, 'atkLeth')"><input type="checkbox" id="comboAtkLeth" onchange="renderTable()">️×💀 Атака×Смерт.</label>
-          <label class="checkbox-label" onclick="toggleCombo(this, 'defHp')"><input type="checkbox" id="comboDefHp" onchange="renderTable()">🛡️×❤️ Защита×Здоровье</label>
         </div>
       </div>
       <div class="table-container" id="mainTable"></div>
@@ -261,7 +254,7 @@
     <div id="tab-players" class="tab-content">
       <div class="compare-panel">
         <h3>👥 Игроки</h3>
-        <button class="btn btn-primary" id="addPlayerBtn2" onclick="openAddPlayer()"> Добавить игрока</button>
+        <button class="btn btn-primary" id="addPlayerBtn2" onclick="openAddPlayer()">➕ Добавить игрока</button>
       </div>
       <div id="playerList"></div>
     </div>
@@ -269,14 +262,14 @@
     <div id="tab-admin" class="tab-content">
       <div class="compare-panel">
         <h3>👑 Управление пользователями</h3>
-        <button class="btn btn-primary" onclick="openAddUser()"> Добавить пользователя</button>
+        <button class="btn btn-primary" onclick="openAddUser()">➕ Добавить пользователя</button>
       </div>
       <div id="userList" style="margin-bottom: 20px;"></div>
       
       <div class="compare-panel">
         <h3>⚙️ Управление данными</h3>
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 15px;">
-          <button class="btn btn-warning" onclick="clearHistory()">🗑️ Очистить историю</button>
+          <button class="btn btn-warning" onclick="clearHistory()">️ Очистить историю</button>
           <button class="btn btn-danger" onclick="resetData()">⚠️ Полный сброс данных</button>
         </div>
         <h4 style="color:var(--accent); margin-bottom:10px;">📜 Последние действия в системе</h4>
@@ -498,54 +491,6 @@ function switchTab(tab) {
 
 function toggleCheckbox(label) { setTimeout(() => { const cb = label.querySelector('input'); label.classList.toggle('checked', cb.checked); }, 0); }
 
-// Обработка комбо-фильтров: при включении одного — выключаем другой и обычные статы
-function toggleCombo(label, comboId) {
-  setTimeout(() => {
-    const cb = label.querySelector('input');
-    label.classList.toggle('checked', cb.checked);
-    
-    if (cb.checked) {
-      // Выключаем другой комбо
-      if (comboId === 'atkLeth') {
-        document.getElementById('comboDefHp').checked = false;
-        document.querySelectorAll('.checkbox-label').forEach(l => {
-          const inp = l.querySelector('input');
-          if (inp && (inp.value === 'Атака' || inp.value === 'Защита' || inp.value === 'Смертоносность' || inp.value === 'Здоровье')) {
-            // Не трогаем обычные статы, просто комбо переопределит
-          }
-        });
-      } else {
-        document.getElementById('comboAtkLeth').checked = false;
-      }
-      // Снимаем галочки с противоположных комбо-чекбоксов визуально
-      document.querySelectorAll('.checkbox-label').forEach(l => {
-        const inp = l.querySelector('input');
-        if (inp && inp.id === 'comboAtkLeth' && comboId !== 'atkLeth') {
-          l.classList.remove('checked');
-        }
-        if (inp && inp.id === 'comboDefHp' && comboId !== 'defHp') {
-          l.classList.remove('checked');
-        }
-      });
-    }
-    renderTable();
-  }, 0);
-}
-
-function getActiveStats() {
-  const comboAtkLeth = document.getElementById('comboAtkLeth')?.checked;
-  const comboDefHp = document.getElementById('comboDefHp')?.checked;
-  
-  if (comboAtkLeth) return ['Атака', 'Смертоносность'];
-  if (comboDefHp) return ['Защита', 'Здоровье'];
-  
-  // Обычные чекбоксы
-  const checked = document.querySelectorAll('#tab-table input[type="checkbox"][value]:checked');
-  const stats = [];
-  checked.forEach(cb => { if (STATS.includes(cb.value)) stats.push(cb.value); });
-  return stats.length ? stats : STATS;
-}
-
 function isPlayerVisible(playerName) {
   if (userData?.role === 'admin') return true;
   const player = playersData[playerName];
@@ -580,13 +525,18 @@ function getFilteredUnits() {
   const units = []; checked.forEach(cb => { if (UNITS.includes(cb.value)) units.push(cb.value); }); 
   return units.length ? units : UNITS; 
 }
+function getFilteredStats() { 
+  const checked = document.querySelectorAll('#tab-table input[type="checkbox"][value]:checked'); 
+  const stats = []; checked.forEach(cb => { if (STATS.includes(cb.value)) stats.push(cb.value); }); 
+  return stats.length ? stats : STATS; 
+}
 
 function renderTable() {
   const search = document.getElementById('searchFilter').value.toLowerCase();
   const highlight = document.getElementById('enableHighlight').checked;
   const allianceFilter = document.getElementById('allianceFilter').value;
   const units = getFilteredUnits();
-  const stats = getActiveStats();
+  const stats = getFilteredStats();
   
   updateAllianceFilter();
   
@@ -609,87 +559,34 @@ function renderTable() {
   let html = '<table><thead><tr>';
   html += `<th class="row-header" onclick="sortTable('name')">Игрок ${getSortArrow('name')}</th>`;
   html += `<th onclick="sortTable('alliance')">Альянс ${getSortArrow('alliance')}</th>`;
-  units.forEach(unit => { 
-    if (document.getElementById('comboAtkLeth')?.checked) {
-      html += `<th onclick="sortTable('${unit}|comboAtkLeth')">${unit}<br>Атака×Смерт. ${getSortArrow(unit+'|comboAtkLeth')}</th>`;
-    } else if (document.getElementById('comboDefHp')?.checked) {
-      html += `<th onclick="sortTable('${unit}|comboDefHp')">${unit}<br>Защита×Здоровье ${getSortArrow(unit+'|comboDefHp')}</th>`;
-    } else {
-      stats.forEach(stat => { const colKey = unit+'|'+stat; html += `<th onclick="sortTable('${colKey}')">${unit}<br>${stat} ${getSortArrow(colKey)}</th>`; });
-    }
-  });
+  units.forEach(unit => { stats.forEach(stat => { const colKey = unit+'|'+stat; html += `<th onclick="sortTable('${colKey}')">${unit}<br>${stat} ${getSortArrow(colKey)}</th>`; });});
   html += `<th onclick="sortTable('total')">Σ ${getSortArrow('total')}</th>`;
   html += '</tr></thead><tbody>';
 
   const allValues = {};
-  units.forEach(unit => { 
-    if (document.getElementById('comboAtkLeth')?.checked) {
-      allValues[unit+'|comboAtkLeth'] = players.map(p => {
-        const atk = playersData[p]?.[unit]?.['Атака']||0;
-        const leth = playersData[p]?.[unit]?.['Смертоносность']||0;
-        return (atk/100) * (leth/100) * 100;
-      });
-    } else if (document.getElementById('comboDefHp')?.checked) {
-      allValues[unit+'|comboDefHp'] = players.map(p => {
-        const def = playersData[p]?.[unit]?.['Защита']||0;
-        const hp = playersData[p]?.[unit]?.['Здоровье']||0;
-        return (def/100) * (hp/100) * 100;
-      });
-    } else {
-      stats.forEach(stat => { allValues[unit+'|'+stat] = players.map(p => playersData[p]?.[unit]?.[stat]||0); });
-    }
-  });
+  units.forEach(unit => { stats.forEach(stat => { allValues[unit+'|'+stat] = players.map(p => playersData[p]?.[unit]?.[stat]||0); }); });
 
   players.forEach(p => {
     const alliance = playersData[p].Альянс || '';
     html += `<tr><td class="row-header" style="cursor:pointer" onclick="openEditPlayer('${p}')">${p}${alliance?`<span class="alliance-badge">${alliance}</span>`:''}</td>`;
     html += `<td>${alliance||'-'}</td>`;
     let totalSum = 0;
-    units.forEach(unit => { 
-      if (document.getElementById('comboAtkLeth')?.checked) {
-        const atk = playersData[p]?.[unit]?.['Атака']||0;
-        const leth = playersData[p]?.[unit]?.['Смертоносность']||0;
-        const combo = (atk/100) * (leth/100) * 100; // произведение в процентах
-        const avgCombo = allValues[unit+'|comboAtkLeth'].reduce((a,b)=>a+b,0)/allValues[unit+'|comboAtkLeth'].length;
-        let cls = highlight ? getCellClass(combo, avgCombo) : '';
-        html += `<td class="${cls}">${combo.toFixed(1)}%</td>`;
-        totalSum += combo;
-      } else if (document.getElementById('comboDefHp')?.checked) {
-        const def = playersData[p]?.[unit]?.['Защита']||0;
-        const hp = playersData[p]?.[unit]?.['Здоровье']||0;
-        const combo = (def/100) * (hp/100) * 100;
-        const avgCombo = allValues[unit+'|comboDefHp'].reduce((a,b)=>a+b,0)/allValues[unit+'|comboDefHp'].length;
-        let cls = highlight ? getCellClass(combo, avgCombo) : '';
-        html += `<td class="${cls}">${combo.toFixed(1)}%</td>`;
-        totalSum += combo;
-      } else {
-        stats.forEach(stat => {
-          const v = playersData[p]?.[unit]?.[stat]||0;
-          const avg = allValues[unit+'|'+stat].reduce((a,b)=>a+b,0)/allValues[unit+'|'+stat].length;
-          let cls = highlight ? getCellClass(v, avg) : '';
-          html += `<td class="${cls}">${v}</td>`;
-          totalSum += v;
-        });
-      }
-    });
+    units.forEach(unit => { stats.forEach(stat => {
+      const v = playersData[p]?.[unit]?.[stat]||0;
+      const avg = allValues[unit+'|'+stat].reduce((a,b)=>a+b,0)/allValues[unit+'|'+stat].length;
+      let cls = '';
+      if (highlight) cls = getCellClass(v, avg);
+      html += `<td class="${cls}">${v}</td>`;
+      totalSum += v;
+    });});
     html += `<td>${totalSum}</td></tr>`;
   });
   
   html += '<tr><td class="row-header">Среднее</td><td>-</td>';
-  units.forEach(unit => { 
-    if (document.getElementById('comboAtkLeth')?.checked) {
-      const avg = allValues[unit+'|comboAtkLeth'].reduce((a,b)=>a+b,0)/allValues[unit+'|comboAtkLeth'].length;
-      html += `<td class="cell-avg">${avg.toFixed(1)}%</td>`;
-    } else if (document.getElementById('comboDefHp')?.checked) {
-      const avg = allValues[unit+'|comboDefHp'].reduce((a,b)=>a+b,0)/allValues[unit+'|comboDefHp'].length;
-      html += `<td class="cell-avg">${avg.toFixed(1)}%</td>`;
-    } else {
-      stats.forEach(stat => {
-        const avg = allValues[unit+'|'+stat].reduce((a,b)=>a+b,0)/allValues[unit+'|'+stat].length;
-        html += `<td class="cell-avg">${avg.toFixed(1)}</td>`;
-      });
-    }
-  });
+  units.forEach(unit => { stats.forEach(stat => {
+    const avg = allValues[unit+'|'+stat].reduce((a,b)=>a+b,0)/allValues[unit+'|'+stat].length;
+    html += `<td class="cell-avg">${avg.toFixed(1)}</td>`;
+  });});
   html += '<td class="cell-avg">-</td></tr>';
 
   html += '</tbody></table>';
@@ -740,7 +637,7 @@ function renderCharts() {
 function renderPlayerList() {
   const names = getVisiblePlayers().sort();
   let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:15px">';
-  names.forEach(name => { let total = 0; UNITS.forEach(u => STATS.forEach(s => { total += playersData[name]?.[u]?.[s]||0; })); const alliance = playersData[name].Альянс||''; html += `<div style="background:var(--bg-tertiary);border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border)"><div><div style="font-weight:600">${name}${alliance?`<span class="alliance-badge">${alliance}</span>`:''}</div><div style="font-size:11px;color:var(--text-secondary)">Σ ${total}</div></div><div style="display:flex;gap:5px">${userData && (userData.role === 'editor' || userData.role === 'admin') ? `<button class="btn btn-secondary" onclick="openEditPlayer('${name}')">✏️</button><button class="btn btn-danger" onclick="deletePlayer('${name}')">️</button>` : ''}</div></div>`; });
+  names.forEach(name => { let total = 0; UNITS.forEach(u => STATS.forEach(s => { total += playersData[name]?.[u]?.[s]||0; })); const alliance = playersData[name].Альянс||''; html += `<div style="background:var(--bg-tertiary);border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border)"><div><div style="font-weight:600">${name}${alliance?`<span class="alliance-badge">${alliance}</span>`:''}</div><div style="font-size:11px;color:var(--text-secondary)">Σ ${total}</div></div><div style="display:flex;gap:5px">${userData && (userData.role === 'editor' || userData.role === 'admin') ? `<button class="btn btn-secondary" onclick="openEditPlayer('${name}')">✏️</button><button class="btn btn-danger" onclick="deletePlayer('${name}')">🗑️</button>` : ''}</div></div>`; });
   html += '</div>';
   document.getElementById('playerList').innerHTML = html;
 }
@@ -794,41 +691,71 @@ async function runOCR(file) {
   } catch (err) { status.textContent = '❌ ' + err.message; status.className = 'ocr-status error'; status.style.display = 'block'; }
 }
 
-// ===== НОВЫЙ ПАРСЕР: ищет числа формата XX,X или XXX,X =====
+// ===== НОВЫЙ ПАРСЕР: ищет числа формата XX,X =====
 function parseOcrText(text) {
   const parsed = { 'Пехота': {}, 'Кавалерия': {}, 'Лучники': {} };
   
-  // Ищем все числа формата 2-4 цифры + запятая/точка + 1 цифра
-  // \b - граница слова, чтобы не захватить куски больших чисел
-  const pattern = /\b\d{2,4}[.,]\d\b/g;
-  const allNumbers = text.match(pattern) || [];
+  // Ищем все числа формата: 2-4 цифры, запятая, 1 цифра
+  // Например: 260,1 или 189,3 или 330,0
+  const pattern = /\b\d{2,4},\d\b/g;
+  const allNumbers = [];
+  let match;
+  while ((match = pattern.exec(text)) !== null) {
+    const val = parseFloat(match[0].replace(',', '.'));
+    if (val > 0 && val < 10000) {
+      allNumbers.push(val);
+    }
+  }
   
-  console.log('All numbers found:', allNumbers);
+  console.log('Found numbers:', allNumbers);
+  console.log('Total count:', allNumbers.length);
   
-  // Берём каждое второе число (чётные индексы 0, 2, 4...) — это левый столбец
-  const targetNumbers = allNumbers.filter((_, i) => i % 2 === 0);
+  // Порядок: Пехота(Атака,Защита,Смерт,Здоровье), Кавалерия(...), Лучники(...)
+  const order = [
+    ['Пехота', 'Атака'],
+    ['Пехота', 'Защита'],
+    ['Пехота', 'Смертоносность'],
+    ['Пехота', 'Здоровье'],
+    ['Кавалерия', 'Атака'],
+    ['Кавалерия', 'Защита'],
+    ['Кавалерия', 'Смертоносность'],
+    ['Кавалерия', 'Здоровье'],
+    ['Лучники', 'Атака'],
+    ['Лучники', 'Защита'],
+    ['Лучники', 'Смертоносность'],
+    ['Лучники', 'Здоровье']
+  ];
   
-  console.log('Target numbers (left column):', targetNumbers);
+  let targetNumbers = [];
+  
+  // Если найдено ровно 12 чисел - берём все (OCR распознал только левый столбец)
+  if (allNumbers.length === 12) {
+    targetNumbers = allNumbers;
+    console.log('Exact 12 numbers found, using all');
+  }
+  // Если больше 12 (обычно 24) - берём каждое первое из пары (нечётные индексы: 0, 2, 4...)
+  else if (allNumbers.length > 12) {
+    for (let i = 0; i < allNumbers.length; i += 2) {
+      targetNumbers.push(allNumbers[i]);
+    }
+    console.log('More than 12 numbers, taking every first from pair');
+  }
+  // Если меньше 12 - пробуем взять что есть
+  else {
+    targetNumbers = allNumbers;
+    console.log('Less than 12 numbers, using what we have');
+  }
   
   // Распределяем по категориям
-  const infantry = targetNumbers.slice(0, 4);   // Пехота: Атака, Защита, Смерт, Здоровье
-  const cavalry = targetNumbers.slice(4, 8);    // Кавалерия
-  const archers = targetNumbers.slice(8, 12);   // Лучники
-  
-  const stats = ['Атака', 'Защита', 'Смертоносность', 'Здоровье'];
-  
-  [infantry, cavalry, archers].forEach((group, unitIdx) => {
-    const unit = UNITS[unitIdx];
-    group.forEach((numStr, statIdx) => {
-      if (statIdx < stats.length) {
-        const val = parseFloat(numStr.replace(',', '.'));
-        if (!isNaN(val) && val > 0 && val < 10000) {
-          parsed[unit][stats[statIdx]] = val;
-          console.log(`Parsed: ${unit}.${stats[statIdx]} = ${val}`);
-        }
-      }
-    });
-  });
+  let filledCount = 0;
+  for (let i = 0; i < Math.min(targetNumbers.length, 12); i++) {
+    const [unit, stat] = order[i];
+    if (unit && stat && !parsed[unit][stat]) {
+      parsed[unit][stat] = targetNumbers[i];
+      console.log(`Parsed: ${unit}.${stat} = ${targetNumbers[i]}`);
+      filledCount++;
+    }
+  }
   
   console.log('Final parsed:', parsed);
   return parsed;
@@ -872,7 +799,7 @@ function closeModal() { document.getElementById('modalOverlay').classList.remove
 
 async function resetData() {
   if (!userData || userData.role !== 'admin') { notify('Только админ', 'error'); return; }
-  if (confirm('️ Удалить ВСЕХ игроков из базы? Это действие необратимо.')) {
+  if (confirm('⚠️ Удалить ВСЕХ игроков из базы? Это действие необратимо.')) {
     const players = Object.keys(playersData);
     for (const p of players) { await db.collection('players').doc(p).delete(); }
     playersData = {};
@@ -890,7 +817,7 @@ function renderAdmin() {
     snapshot.forEach(doc => {
       const u = doc.data();
       const isMe = doc.id === currentUser.uid;
-      html += `<div class="user-item"><div><div style="font-weight:600">${u.username || 'Unknown'} ${isMe?'<span style="color:#95d5b2;font-size:11px">(вы)</span>':''}</div><div style="font-size:11px;color:var(--text-secondary)">${u.role} · ${u.created ? new Date(u.created).toLocaleDateString('ru-RU') : ''}</div></div><div style="display:flex;gap:5px"><button class="btn btn-secondary" onclick="editUserRole('${doc.id}')">✏️</button>${!isMe ? `<button class="btn btn-danger" onclick="deleteUser('${doc.id}')">🗑️</button>` : ''}</div></div>`;
+      html += `<div class="user-item"><div><div style="font-weight:600">${u.username || 'Unknown'} ${isMe?'<span style="color:#95d5b2;font-size:11px">(вы)</span>':''}</div><div style="font-size:11px;color:var(--text-secondary)">${u.role} · ${u.created ? new Date(u.created).toLocaleDateString('ru-RU') : ''}</div></div><div style="display:flex;gap:5px"><button class="btn btn-secondary" onclick="editUserRole('${doc.id}')">✏️</button>${!isMe ? `<button class="btn btn-danger" onclick="deleteUser('${doc.id}')">️</button>` : ''}</div></div>`;
     });
     document.getElementById('userList').innerHTML = html;
   });
@@ -911,7 +838,7 @@ function openAddUser() {
   let html = `<h2>➕ Добавить пользователя</h2>
     <div class="form-group"><label>Имя пользователя</label><input type="text" id="newUsername" placeholder="Имя"></div>
     <div class="form-group"><label>Пароль</label><input type="password" id="newUserPassword" placeholder="Пароль"></div>
-    <div class="form-group"><label>Роль</label><select id="newUserRole"><option value="viewer">👁️ Просмотр</option><option value="editor">️ Редактор</option><option value="admin">👑 Админ</option></select></div>
+    <div class="form-group"><label>Роль</label><select id="newUserRole"><option value="viewer">👁️ Просмотр</option><option value="editor">✏️ Редактор</option><option value="admin">👑 Админ</option></select></div>
     <div class="modal-buttons"><button class="btn btn-secondary" onclick="closeModal()">Отмена</button><button class="btn btn-primary" onclick="createUser()">Создать</button></div>`;
   document.getElementById('modalContent').innerHTML = html;
   document.getElementById('modalOverlay').classList.add('show');
@@ -945,8 +872,8 @@ async function editUserRole(userId) {
   const alliances = getAlliances();
   let html = `<h2>✏️ Редактировать пользователя</h2>
     <div class="form-group"><label>Имя</label><input type="text" id="editUsername" value="${u.username||''}" readonly></div>
-    <div class="form-group"><label>Роль</label><select id="editUserRole"><option value="viewer" ${u.role==='viewer'?'selected':''}>👁️ Просмотр</option><option value="editor" ${u.role==='editor'?'selected':''}>✏️ Редактор</option><option value="admin" ${u.role==='admin'?'selected':''}>👑 Админ</option></select></div>
-    <div class="form-group"><label>🔒 Приватность альянсов</label>
+    <div class="form-group"><label>Роль</label><select id="editUserRole"><option value="viewer" ${u.role==='viewer'?'selected':''}>️ Просмотр</option><option value="editor" ${u.role==='editor'?'selected':''}>✏️ Редактор</option><option value="admin" ${u.role==='admin'?'selected':''}> Админ</option></select></div>
+    <div class="form-group"><label> Приватность альянсов</label>
       <div class="radio-group">
         <label class="radio-label ${(u.visibilityMode!=='hide')?'active':''}" onclick="setVisMode('show')"><input type="radio" name="visMode" value="show" ${(u.visibilityMode!=='hide')?'checked':''}> 👁️ Видит только отмеченные</label>
         <label class="radio-label ${(u.visibilityMode==='hide')?'active':''}" onclick="setVisMode('hide')"><input type="radio" name="visMode" value="hide" ${(u.visibilityMode==='hide')?'checked':''}> 🙈 Скрывает отмеченные</label>
