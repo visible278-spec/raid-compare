@@ -617,7 +617,10 @@ function renderComparison() {
     total1+=v1; total2+=v2; 
     html += `<tr><td class="row-header">${stat}</td><td>${v1}</td><td>${v2}</td><td class="${cls}">${sign}${diff}</td><td class="${cls}">${sign}${pct}%</td></tr>`; 
   });});
-  const td=total1-total2, tp=total2>0?((total1/total2-1)*100).toFixed(1):0; const tc=td>0?'diff-positive':td<0?'diff-negative':''; const ts=td>0?'+':'';
+  const td = total1 - total2;
+  const tp = total2 > 0 ? ((total1 / total2 - 1) * 100) : 0; 
+  const tc = td > 0 ? 'diff-positive' : td < 0 ? 'diff-negative' : ''; 
+  const ts = td > 0 ? '+' : '';
   html += `<tr style="font-weight:700"><td class="row-header">Итого</td><td>${total1}</td><td>${total2}</td><td class="${tc}">${ts}${td}</td><td class="${tc}">${ts}${tp.toFixed(1)}%</td></tr></tbody></table>`;
   document.getElementById('compareTable').innerHTML = html;
 }
