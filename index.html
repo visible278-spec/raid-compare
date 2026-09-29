@@ -19,7 +19,7 @@
     --cell-red: rgba(180,40,40,0.3); --cell-avg: rgba(83,52,131,0.3);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; transition: background 0.3s; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
   .header { background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)); padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); flex-wrap: wrap; gap: 10px; }
   .header h1 { font-size: 24px; color: var(--accent); }
   .header-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -87,7 +87,7 @@
   .ocr-status { margin-top: 10px; font-size: 13px; color: #95d5b2; display: none; }
   .ocr-status.error { color: #f4a0a0; }
 
-  .filter-bar { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; background: var(--bg-secondary); padding: 12px 16px; border-radius: 10px; }
+  .filter-bar { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; background: var(--bg-secondary); padding: 12px 16px; border-radius: 10px; align-items: center; }
   .filter-bar input, .filter-bar select { padding: 8px 12px; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--purple); border-radius: 6px; }
   .checkbox-label { display: flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--bg-tertiary); border-radius: 6px; cursor: pointer; border: 1px solid var(--purple); font-size: 12px; }
   .checkbox-label.checked { background: rgba(233,69,96,0.2); border-color: var(--accent); color: var(--accent); }
@@ -117,7 +117,6 @@
   .radio-label input { display: none; }
   .radio-label.active { background: rgba(233,69,96,0.2); border-color: var(--accent); color: var(--accent); }
 
-  /* Login screen */
   .login-screen { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary)); padding: 20px; }
   .login-box { background: var(--bg-secondary); padding: 40px; border-radius: 12px; border: 1px solid var(--accent); max-width: 420px; width: 100%; }
   .login-box h2 { color: var(--accent); margin-bottom: 10px; text-align: center; }
@@ -130,17 +129,12 @@
   .login-tab { flex: 1; padding: 10px; background: var(--bg-tertiary); color: var(--text-secondary); border: none; cursor: pointer; font-weight: 600; font-size: 13px; }
   .login-tab.active { background: var(--accent); color: white; }
 
-  .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
-  .loading .spinner { border: 3px solid var(--border); border-top: 3px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
-  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
   .theme-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-bottom: 20px; }
   .theme-preset { padding: 15px; border-radius: 8px; cursor: pointer; border: 2px solid var(--border); text-align: center; background: var(--bg-tertiary); }
   .theme-preset:hover { border-color: var(--accent); }
   .theme-preset.active { border-color: var(--accent); box-shadow: 0 0 10px rgba(233,69,96,0.3); }
   .theme-preset .preview { width: 100%; height: 40px; border-radius: 4px; margin-bottom: 8px; }
   .theme-preset .name { font-size: 12px; font-weight: 600; }
-
   .color-picker-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
   .color-picker-item { display: flex; flex-direction: column; gap: 5px; }
   .color-picker-item label { font-size: 12px; color: var(--text-secondary); }
@@ -156,40 +150,23 @@
   <div class="login-box">
     <h2>⚔️ Сравнение рейдов</h2>
     <div class="subtitle">Войдите или продолжите как гость</div>
-    
     <div class="login-tabs">
       <button class="login-tab active" onclick="switchLoginTab('login', this)">Вход</button>
       <button class="login-tab" onclick="switchLoginTab('register', this)">Регистрация</button>
     </div>
-
     <div id="loginForm">
-      <div class="form-group">
-        <label>Имя пользователя</label>
-        <input type="text" id="loginUsername" placeholder="Ваше имя" onkeypress="if(event.key==='Enter')doLogin()">
-      </div>
-      <div class="form-group">
-        <label>Пароль</label>
-        <input type="password" id="loginPassword" placeholder="Пароль" onkeypress="if(event.key==='Enter')doLogin()">
-      </div>
+      <div class="form-group"><label>Имя пользователя</label><input type="text" id="loginUsername" placeholder="Ваше имя" onkeypress="if(event.key==='Enter')doLogin()"></div>
+      <div class="form-group"><label>Пароль</label><input type="password" id="loginPassword" placeholder="Пароль" onkeypress="if(event.key==='Enter')doLogin()"></div>
       <div class="login-error" id="loginError"></div>
       <button class="btn btn-primary" onclick="doLogin()">Войти</button>
     </div>
-
     <div id="registerForm" style="display:none">
-      <div class="form-group">
-        <label>Имя пользователя</label>
-        <input type="text" id="regUsername" placeholder="Придумайте имя">
-      </div>
-      <div class="form-group">
-        <label>Пароль (мин. 6 символов)</label>
-        <input type="password" id="regPassword" placeholder="Пароль">
-      </div>
+      <div class="form-group"><label>Имя пользователя</label><input type="text" id="regUsername" placeholder="Придумайте имя"></div>
+      <div class="form-group"><label>Пароль (мин. 6 символов)</label><input type="password" id="regPassword" placeholder="Пароль"></div>
       <div class="login-error" id="regError"></div>
       <button class="btn btn-primary" onclick="doRegister()">Зарегистрироваться</button>
     </div>
-
     <div class="login-divider">или</div>
-
     <button class="btn btn-guest" onclick="enterAsGuest()">👁️ Войти как гость (только просмотр)</button>
   </div>
 </div>
@@ -200,14 +177,8 @@
     <h1>⚔️ Сравнение рейдов <span id="currentUserBadge" style="font-size:12px;color:var(--text-secondary);margin-left:10px"></span></h1>
     <div class="header-buttons">
       <button class="btn btn-primary" id="addPlayerBtn" onclick="openAddPlayer()">➕ Игрока</button>
-      <button class="btn btn-secondary" onclick="exportJSON()">📥 JSON</button>
-      <button class="btn btn-secondary" onclick="exportCSV()">📊 CSV</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📤 Импорт</button>
-      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-      <button class="btn btn-warning" id="resetBtn" onclick="resetData()">🔄 Сброс</button>
-      <button class="btn btn-admin" id="adminBtn" style="display:none" onclick="switchTab('admin')">👑 Админ</button>
       <button class="btn btn-secondary" onclick="openThemeSettings()">🎨 Тема</button>
-      <button class="btn btn-secondary" id="historyBtn" style="display:none" onclick="switchTab('history')">📜 История</button>
+      <button class="btn btn-admin" id="adminBtn" style="display:none" onclick="switchTab('admin')">👑 Админ</button>
       <button class="btn btn-secondary" id="logoutBtn" onclick="doLogout()">🚪 Выйти</button>
     </div>
   </div>
@@ -218,7 +189,6 @@
     <button class="tab" onclick="switchTab('charts')">📈 Графики</button>
     <button class="tab" onclick="switchTab('players')">👥 Игроки</button>
     <button class="tab" id="adminTab" style="display:none" onclick="switchTab('admin')">👑 Админ</button>
-    <button class="tab" id="historyTab" style="display:none" onclick="switchTab('history')">📜 История</button>
   </div>
 
   <div class="content">
@@ -226,7 +196,20 @@
       <div id="privacyBanner" class="privacy-info" style="display:none"></div>
       <div class="filter-bar">
         <input type="text" id="searchFilter" placeholder="🔍 Поиск..." oninput="renderTable()" style="min-width:200px">
-        <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" id="enableHighlight" checked onchange="renderTable()">🎨 Подсветка</label>
+        <div class="filter-group">
+          <span class="filter-group-title">Юниты:</span>
+          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Пехота" checked onchange="renderTable()">🛡️ Пехота</label>
+          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Кавалерия" checked onchange="renderTable()">🐴 Кавалерия</label>
+          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Лучники" checked onchange="renderTable()">🏹 Лучники</label>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group-title">Статы:</span>
+          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Атака" checked onchange="renderTable()">⚔️ Атака</label>
+          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Защита" checked onchange="renderTable()">🛡️ Защита</label>
+          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Смертоносность" checked onchange="renderTable()">💀 Смерт.</label>
+          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Здоровье" checked onchange="renderTable()">❤️ Здоровье</label>
+        </div>
+        <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" id="enableHighlight" checked onchange="renderTable()">💡 Индикация</label>
       </div>
       <div class="table-container" id="mainTable"></div>
     </div>
@@ -246,15 +229,10 @@
     <div id="tab-charts" class="tab-content">
       <div class="filter-bar">
         <select id="chartUnit" onchange="renderCharts()">
-          <option value="Пехота">Пехота</option>
-          <option value="Кавалерия">Кавалерия</option>
-          <option value="Лучники">Лучники</option>
+          <option value="Пехота">Пехота</option><option value="Кавалерия">Кавалерия</option><option value="Лучники">Лучники</option>
         </select>
         <select id="chartStat" onchange="renderCharts()">
-          <option value="Атака">Атака</option>
-          <option value="Защита">Защита</option>
-          <option value="Смертоносность">Смертоносность</option>
-          <option value="Здоровье">Здоровье</option>
+          <option value="Атака">Атака</option><option value="Защита">Защита</option><option value="Смертоносность">Смертоносность</option><option value="Здоровье">Здоровье</option>
         </select>
       </div>
       <div class="table-container" id="chartContainer"></div>
@@ -273,16 +251,17 @@
         <h3>👑 Управление пользователями</h3>
         <button class="btn btn-primary" onclick="openAddUser()">➕ Добавить пользователя</button>
       </div>
-      <div id="userList"></div>
-    </div>
-
-    <div id="tab-history" class="tab-content">
+      <div id="userList" style="margin-bottom: 20px;"></div>
+      
       <div class="compare-panel">
-        <h3>📜 История изменений</h3>
-        <button class="btn btn-secondary" onclick="exportHistory()">📥 Экспорт</button>
-        <button class="btn btn-warning" onclick="clearHistory()">🗑️ Очистить</button>
+        <h3>⚙️ Управление данными</h3>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 15px;">
+          <button class="btn btn-warning" onclick="clearHistory()">🗑️ Очистить историю</button>
+          <button class="btn btn-danger" onclick="resetData()">⚠️ Полный сброс данных</button>
+        </div>
+        <h4 style="color:var(--accent); margin-bottom:10px;">📜 Последние действия в системе</h4>
+        <div id="adminHistoryList" style="max-height: 300px; overflow-y: auto;"></div>
       </div>
-      <div id="historyList"></div>
     </div>
   </div>
 </div>
@@ -290,7 +269,6 @@
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal" id="modalContent"></div>
 </div>
-
 <div class="notification" id="notification"></div>
 
 <script>
@@ -308,13 +286,10 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Суффикс для формирования email из имени пользователя
 const EMAIL_SUFFIX = '@raid.local';
-
 const UNITS = ['Пехота', 'Кавалерия', 'Лучники'];
 const STATS = ['Атака', 'Защита', 'Смертоносность', 'Здоровье'];
 
-// Темы
 const themes = {
   'dark': { name: 'Тёмная', colors: { '--bg-primary':'#1a1a2e','--bg-secondary':'#16213e','--bg-tertiary':'#0f3460','--accent':'#e94560','--accent-hover':'#ff6b81','--text-primary':'#e0e0e0','--text-secondary':'#aaa','--border':'#2a2a4a','--success':'#2d6a4f','--warning':'#e76f51','--danger':'#6b1d1d','--purple':'#533483','--cell-green':'rgba(45,106,79,0.4)','--cell-yellow':'rgba(230,180,50,0.2)','--cell-red':'rgba(180,40,40,0.3)','--cell-avg':'rgba(83,52,131,0.3)' }},
   'light': { name: 'Светлая', colors: { '--bg-primary':'#f5f5f5','--bg-secondary':'#ffffff','--bg-tertiary':'#e8e8e8','--accent':'#d32f2f','--accent-hover':'#f44336','--text-primary':'#212121','--text-secondary':'#757575','--border':'#bdbdbd','--success':'#388e3c','--warning':'#f57c00','--danger':'#c62828','--purple':'#7b1fa2','--cell-green':'rgba(56,142,60,0.2)','--cell-yellow':'rgba(245,124,0,0.15)','--cell-red':'rgba(198,40,40,0.15)','--cell-avg':'rgba(123,31,162,0.15)' }},
@@ -367,18 +342,15 @@ async function doLogin() {
   const username = document.getElementById('loginUsername').value.trim();
   const password = document.getElementById('loginPassword').value;
   const errEl = document.getElementById('loginError');
-  
   if (!username || !password) { errEl.textContent = 'Введите имя и пароль'; errEl.style.display = 'block'; return; }
-  
   const email = username + EMAIL_SUFFIX;
   try {
     await auth.signInWithEmailAndPassword(email, password);
     errEl.style.display = 'none';
   } catch (error) {
     let msg = 'Ошибка входа';
-    if (error.code === 'auth/user-not-found') msg = 'Пользователь не найден';
-    else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') msg = 'Неверный пароль';
-    else if (error.code === 'auth/invalid-email') msg = 'Недопустимое имя (только буквы, цифры)';
+    if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') msg = 'Пользователь не найден или неверный пароль';
+    else if (error.code === 'auth/invalid-email') msg = 'Недопустимое имя';
     else msg = error.message;
     errEl.textContent = msg;
     errEl.style.display = 'block';
@@ -389,25 +361,19 @@ async function doRegister() {
   const username = document.getElementById('regUsername').value.trim();
   const password = document.getElementById('regPassword').value;
   const errEl = document.getElementById('regError');
-  
   if (!username || !password) { errEl.textContent = 'Заполните все поля'; errEl.style.display = 'block'; return; }
-  if (password.length < 6) { errEl.textContent = 'Пароль должен быть минимум 6 символов'; errEl.style.display = 'block'; return; }
-  if (!/^[a-zA-Zа-яА-Я0-9_\-]+$/.test(username)) { errEl.textContent = 'Имя может содержать только буквы, цифры, _ и -'; errEl.style.display = 'block'; return; }
-  
+  if (password.length < 6) { errEl.textContent = 'Пароль минимум 6 символов'; errEl.style.display = 'block'; return; }
+  if (!/^[a-zA-Zа-яА-Я0-9_\-]+$/.test(username)) { errEl.textContent = 'Только буквы, цифры, _ и -'; errEl.style.display = 'block'; return; }
   const email = username + EMAIL_SUFFIX;
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, password);
     await db.collection('users').doc(cred.user.uid).set({
-      username: username,
-      role: 'viewer',
-      visibleAlliances: [],
-      visibilityMode: 'show',
-      created: new Date().toISOString()
+      username: username, role: 'viewer', visibleAlliances: [], visibilityMode: 'show', created: new Date().toISOString()
     });
     errEl.style.display = 'none';
     notify('Регистрация успешна!', 'success');
   } catch (error) {
-    let msg = 'Ошибка регистрации';
+    let msg = 'Ошибка';
     if (error.code === 'auth/email-already-in-use') msg = 'Это имя уже занято';
     else if (error.code === 'auth/weak-password') msg = 'Слишком простой пароль';
     else msg = error.message;
@@ -417,17 +383,11 @@ async function doRegister() {
 }
 
 async function enterAsGuest() {
-  try {
-    await auth.signInAnonymously();
-    notify('Вы вошли как гость', 'info');
-  } catch (error) {
-    notify('Ошибка: ' + error.message, 'error');
-  }
+  try { await auth.signInAnonymously(); notify('Вы вошли как гость', 'info'); } 
+  catch (error) { notify('Ошибка: ' + error.message, 'error'); }
 }
 
-async function doLogout() {
-  await auth.signOut();
-}
+async function doLogout() { await auth.signOut(); }
 
 // ===== AUTH STATE =====
 auth.onAuthStateChanged(async (user) => {
@@ -441,9 +401,7 @@ auth.onAuthStateChanged(async (user) => {
     updateUI();
     renderTable();
   } else {
-    currentUser = null;
-    userData = null;
-    playersData = {};
+    currentUser = null; userData = null; playersData = {}; historyLog = [];
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('appContainer').style.display = 'none';
   }
@@ -452,101 +410,59 @@ auth.onAuthStateChanged(async (user) => {
 async function loadUserData() {
   if (!currentUser) return;
   try {
-    if (currentUser.isAnonymous) {
-      userData = { username: 'Гость', role: 'guest', visibleAlliances: [], visibilityMode: 'show' };
-      return;
-    }
+    if (currentUser.isAnonymous) { userData = { username: 'Гость', role: 'guest', visibleAlliances: [], visibilityMode: 'show' }; return; }
     const doc = await db.collection('users').doc(currentUser.uid).get();
-    if (doc.exists) {
-      userData = doc.data();
-    } else {
-      // Миграция: создаём профиль из email
+    if (doc.exists) { userData = doc.data(); } 
+    else {
       const username = currentUser.email ? currentUser.email.replace(EMAIL_SUFFIX, '') : 'User';
       userData = { username, role: 'viewer', visibleAlliances: [], visibilityMode: 'show', created: new Date().toISOString() };
       await db.collection('users').doc(currentUser.uid).set(userData);
     }
-  } catch (error) {
-    console.error('Error loading user:', error);
-    userData = { username: 'User', role: 'viewer', visibleAlliances: [], visibilityMode: 'show' };
-  }
+  } catch (error) { userData = { username: 'User', role: 'viewer', visibleAlliances: [], visibilityMode: 'show' }; }
 }
 
 function updateUI() {
   if (!currentUser || !userData) return;
   const roleLabel = userData.role === 'admin' ? 'админ' : userData.role === 'editor' ? 'редактор' : userData.role === 'guest' ? 'гость' : 'просмотр';
   document.getElementById('currentUserBadge').textContent = `${userData.username} (${roleLabel})`;
-  
   const isAdmin = userData.role === 'admin';
   const canEdit = userData.role === 'editor' || userData.role === 'admin';
-  
   document.getElementById('adminBtn').style.display = isAdmin ? 'inline-block' : 'none';
   document.getElementById('adminTab').style.display = isAdmin ? 'inline-block' : 'none';
-  document.getElementById('historyBtn').style.display = canEdit ? 'inline-block' : 'none';
-  document.getElementById('historyTab').style.display = canEdit ? 'inline-block' : 'none';
   document.getElementById('addPlayerBtn').style.display = canEdit ? 'inline-block' : 'none';
   document.getElementById('addPlayerBtn2').style.display = canEdit ? 'inline-block' : 'none';
-  document.getElementById('resetBtn').style.display = canEdit ? 'inline-block' : 'none';
   
   const banner = document.getElementById('privacyBanner');
   const alliances = userData.visibleAlliances || [];
   const mode = userData.visibilityMode || 'show';
   if (alliances.length > 0 && userData.role !== 'admin') {
     banner.style.display = 'block';
-    if (mode === 'hide') {
-      banner.className = 'privacy-info mode-hide';
-      banner.innerHTML = `<strong>🔒 Скрыты альянсы:</strong> ${alliances.join(', ')}`;
-    } else {
-      banner.className = 'privacy-info';
-      banner.innerHTML = `<strong>👁️ Видны только:</strong> ${alliances.join(', ')}`;
-    }
+    if (mode === 'hide') { banner.className = 'privacy-info mode-hide'; banner.innerHTML = `<strong>🔒 Скрыты альянсы:</strong> ${alliances.join(', ')}`; } 
+    else { banner.className = 'privacy-info'; banner.innerHTML = `<strong>👁️ Видны только:</strong> ${alliances.join(', ')}`; }
   } else { banner.style.display = 'none'; }
 }
 
 // ===== FIREBASE DATA =====
 async function loadPlayersData() {
-  try {
-    const snapshot = await db.collection('players').get();
-    playersData = {};
-    snapshot.forEach(doc => { playersData[doc.id] = doc.data(); });
-    return playersData;
-  } catch (error) { console.error(error); notify('Ошибка загрузки', 'error'); return {}; }
+  try { const snapshot = await db.collection('players').get(); playersData = {}; snapshot.forEach(doc => { playersData[doc.id] = doc.data(); }); return playersData; } 
+  catch (error) { console.error(error); notify('Ошибка загрузки', 'error'); return {}; }
 }
-
 async function savePlayerData(name, playerData) {
-  try {
-    await db.collection('players').doc(name).set(playerData);
-    playersData[name] = playerData;
-    return true;
-  } catch (error) { console.error(error); notify('Ошибка сохранения', 'error'); return false; }
+  try { await db.collection('players').doc(name).set(playerData); playersData[name] = playerData; return true; } 
+  catch (error) { console.error(error); notify('Ошибка сохранения', 'error'); return false; }
 }
-
 async function deletePlayerData(name) {
-  try {
-    await db.collection('players').doc(name).delete();
-    delete playersData[name];
-    return true;
-  } catch (error) { console.error(error); notify('Ошибка удаления', 'error'); return false; }
+  try { await db.collection('players').doc(name).delete(); delete playersData[name]; return true; } 
+  catch (error) { console.error(error); notify('Ошибка удаления', 'error'); return false; }
 }
-
 async function loadHistory() {
-  try {
-    const snapshot = await db.collection('history').orderBy('time', 'desc').limit(500).get();
-    historyLog = [];
-    snapshot.forEach(doc => { historyLog.push(doc.data()); });
-  } catch (error) { console.error(error); historyLog = []; }
+  try { const snapshot = await db.collection('history').orderBy('time', 'desc').limit(100).get(); historyLog = []; snapshot.forEach(doc => { historyLog.push(doc.data()); }); } 
+  catch (error) { console.error(error); historyLog = []; }
 }
-
 async function addHistory(action, details) {
   if (!currentUser || userData?.role === 'guest') return;
-  const entry = {
-    time: new Date().toISOString(),
-    user: userData?.username || 'Unknown',
-    action, details
-  };
-  try {
-    await db.collection('history').add(entry);
-    historyLog.unshift(entry);
-  } catch (error) { console.error(error); }
+  const entry = { time: new Date().toISOString(), user: userData?.username || 'Unknown', action, details };
+  try { await db.collection('history').add(entry); historyLog.unshift(entry); } catch (error) { console.error(error); }
 }
 
 // ===== UI =====
@@ -559,7 +475,6 @@ function switchTab(tab) {
   if (tab === 'charts') renderCharts();
   if (tab === 'players') renderPlayerList();
   if (tab === 'admin') renderAdmin();
-  if (tab === 'history') renderHistory();
   if (tab === 'table') renderTable();
 }
 
@@ -578,27 +493,32 @@ function isPlayerVisible(playerName) {
 }
 
 function getVisiblePlayers() { return Object.keys(playersData).filter(isPlayerVisible); }
-
-function getCellClass(value, avg) {
-  if (avg === 0) return '';
-  const ratio = value / avg;
-  if (ratio >= 1.1) return 'cell-green';
-  if (ratio >= 0.95) return 'cell-yellow';
-  return 'cell-red';
-}
-
+function getCellClass(value, avg) { if (avg === 0) return ''; const ratio = value / avg; if (ratio >= 1.1) return 'cell-green'; if (ratio >= 0.95) return 'cell-yellow'; return 'cell-red'; }
 function getAlliances() { const alliances = new Set(); Object.values(playersData).forEach(p => { if (p.Альянс) alliances.add(p.Альянс); }); return [...alliances].sort(); }
+
+function getFilteredUnits() { 
+  const checked = document.querySelectorAll('#tab-table .filter-group input[type="checkbox"]:checked'); 
+  const units = []; checked.forEach(cb => { if (UNITS.includes(cb.value)) units.push(cb.value); }); 
+  return units.length ? units : UNITS; 
+}
+function getFilteredStats() { 
+  const checked = document.querySelectorAll('#tab-table .filter-group input[type="checkbox"]:checked'); 
+  const stats = []; checked.forEach(cb => { if (STATS.includes(cb.value)) stats.push(cb.value); }); 
+  return stats.length ? stats : STATS; 
+}
 
 function renderTable() {
   const search = document.getElementById('searchFilter').value.toLowerCase();
   const highlight = document.getElementById('enableHighlight').checked;
+  const units = getFilteredUnits();
+  const stats = getFilteredStats();
   const players = getVisiblePlayers().filter(p => p.toLowerCase().includes(search));
 
   if (sortState.column) {
     players.sort((a, b) => {
       let va, vb;
       if (sortState.column === 'name') { va = a; vb = b; }
-      else if (sortState.column === 'total') { va = 0; vb = 0; UNITS.forEach(u => STATS.forEach(s => { va += playersData[a]?.[u]?.[s]||0; vb += playersData[b]?.[u]?.[s]||0; })); }
+      else if (sortState.column === 'total') { va = 0; vb = 0; units.forEach(u => stats.forEach(s => { va += playersData[a]?.[u]?.[s]||0; vb += playersData[b]?.[u]?.[s]||0; })); }
       else { const [unit, stat] = sortState.column.split('|'); va = playersData[a]?.[unit]?.[stat]||0; vb = playersData[b]?.[unit]?.[stat]||0; }
       return sortState.direction === 'asc' ? (typeof va === 'string' ? va.localeCompare(vb) : va - vb) : (typeof va === 'string' ? vb.localeCompare(va) : vb - va);
     });
@@ -607,19 +527,19 @@ function renderTable() {
   let html = '<table><thead><tr>';
   html += `<th class="row-header" onclick="sortTable('name')">Игрок ${getSortArrow('name')}</th>`;
   html += `<th onclick="sortTable('alliance')">Альянс ${getSortArrow('alliance')}</th>`;
-  UNITS.forEach(unit => { STATS.forEach(stat => { const colKey = unit+'|'+stat; html += `<th onclick="sortTable('${colKey}')">${unit}<br>${stat} ${getSortArrow(colKey)}</th>`; });});
+  units.forEach(unit => { stats.forEach(stat => { const colKey = unit+'|'+stat; html += `<th onclick="sortTable('${colKey}')">${unit}<br>${stat} ${getSortArrow(colKey)}</th>`; });});
   html += `<th onclick="sortTable('total')">Σ ${getSortArrow('total')}</th>`;
   html += '</tr></thead><tbody>';
 
   const allValues = {};
-  UNITS.forEach(unit => { STATS.forEach(stat => { allValues[unit+'|'+stat] = players.map(p => playersData[p]?.[unit]?.[stat]||0); }); });
+  units.forEach(unit => { stats.forEach(stat => { allValues[unit+'|'+stat] = players.map(p => playersData[p]?.[unit]?.[stat]||0); }); });
 
   players.forEach(p => {
     const alliance = playersData[p].Альянс || '';
     html += `<tr><td class="row-header" style="cursor:pointer" onclick="openEditPlayer('${p}')">${p}${alliance?`<span class="alliance-badge">${alliance}</span>`:''}</td>`;
     html += `<td>${alliance||'-'}</td>`;
     let totalSum = 0;
-    UNITS.forEach(unit => { STATS.forEach(stat => {
+    units.forEach(unit => { stats.forEach(stat => {
       const v = playersData[p]?.[unit]?.[stat]||0;
       const avg = allValues[unit+'|'+stat].reduce((a,b)=>a+b,0)/allValues[unit+'|'+stat].length;
       let cls = '';
@@ -629,6 +549,15 @@ function renderTable() {
     });});
     html += `<td>${totalSum}</td></tr>`;
   });
+  
+  // Строка среднего
+  html += '<tr><td class="row-header">Среднее</td><td>-</td>';
+  units.forEach(unit => { stats.forEach(stat => {
+    const avg = allValues[unit+'|'+stat].reduce((a,b)=>a+b,0)/allValues[unit+'|'+stat].length;
+    html += `<td class="cell-avg">${avg.toFixed(1)}</td>`; // Округление до десятых
+  });});
+  html += '<td class="cell-avg">-</td></tr>';
+
   html += '</tbody></table>';
   const tc = document.getElementById('mainTable');
   tc.innerHTML = html;
@@ -650,9 +579,15 @@ function renderComparison() {
   if (!p1||!p2) return;
   let html = '<table><thead><tr><th class="row-header">Параметр</th><th>'+p1+'</th><th>'+p2+'</th><th>Разница</th><th>%</th></tr></thead><tbody>';
   let total1=0,total2=0;
-  UNITS.forEach(unit => { html += `<tr><td class="unit-header" colspan="5">${unit}</td></tr>`; STATS.forEach(stat => { const v1=playersData[p1]?.[unit]?.[stat]||0, v2=playersData[p2]?.[unit]?.[stat]||0; const diff=v1-v2, pct=v2>0?((v1/v2-1)*100).toFixed(1):0; const cls=diff>0?'diff-positive':diff<0?'diff-negative':''; const sign=diff>0?'+':''; total1+=v1; total2+=v2; html += `<tr><td class="row-header">${stat}</td><td>${v1}</td><td>${v2}</td><td class="${cls}">${sign}${diff}</td><td class="${cls}">${sign}${pct}%</td></tr>`; });});
+  UNITS.forEach(unit => { html += `<tr><td class="unit-header" colspan="5">${unit}</td></tr>`; STATS.forEach(stat => { 
+    const v1=playersData[p1]?.[unit]?.[stat]||0, v2=playersData[p2]?.[unit]?.[stat]||0; 
+    const diff=v1-v2, pct=v2>0?((v1/v2-1)*100).toFixed(1):0; // Округление до десятых
+    const cls=diff>0?'diff-positive':diff<0?'diff-negative':''; const sign=diff>0?'+':''; 
+    total1+=v1; total2+=v2; 
+    html += `<tr><td class="row-header">${stat}</td><td>${v1}</td><td>${v2}</td><td class="${cls}">${sign}${diff}</td><td class="${cls}">${sign}${pct}%</td></tr>`; 
+  });});
   const td=total1-total2, tp=total2>0?((total1/total2-1)*100).toFixed(1):0; const tc=td>0?'diff-positive':td<0?'diff-negative':''; const ts=td>0?'+':'';
-  html += `<tr style="font-weight:700"><td class="row-header">Итого</td><td>${total1}</td><td>${total2}</td><td class="${tc}">${ts}${td}</td><td class="${tc}">${ts}${tp}%</td></tr></tbody></table>`;
+  html += `<tr style="font-weight:700"><td class="row-header">Итого</td><td>${total1}</td><td>${total2}</td><td class="${tc}">${ts}${td}</td><td class="${tc}">${ts}${tp.toFixed(1)}%</td></tr></tbody></table>`;
   document.getElementById('compareTable').innerHTML = html;
 }
 
@@ -764,41 +699,15 @@ async function deletePlayer(name) {
 
 function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); ocrImageFile = null; }
 
-function exportJSON() { const blob = new Blob([JSON.stringify(playersData,null,2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'raid_data_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); notify('JSON экспортирован!', 'success'); }
-function exportCSV() { let csv = 'Игрок;Альянс;'; UNITS.forEach(u => STATS.forEach(s => { csv += `${u}-${s};`; })); csv += 'Сумма\n'; getVisiblePlayers().sort().forEach(name => { csv += `${name};${playersData[name].Альянс||''};`; let total = 0; UNITS.forEach(u => STATS.forEach(s => { const v = playersData[name]?.[u]?.[s]||0; csv += `${v};`; total += v; })); csv += `${total}\n`; }); const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'raid_data_'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); notify('CSV экспортирован!', 'success'); }
-
-async function importData(event) {
-  if (!userData || userData.role === 'guest' || userData.role === 'viewer') { notify('Нет прав', 'error'); return; }
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async function(e) {
-    try {
-      const imported = JSON.parse(e.target.result);
-      if (confirm('Заменить данные? (Отмена = добавить)')) {
-        const oldPlayers = Object.keys(playersData);
-        for (const p of oldPlayers) { await db.collection('players').doc(p).delete(); }
-        playersData = {};
-      }
-      for (const [name, data] of Object.entries(imported)) { await db.collection('players').doc(name).set(data); playersData[name] = data; }
-      await addHistory('Импорт данных', Object.keys(imported).length + ' игроков');
-      renderTable();
-      notify('Импортировано!', 'success');
-    } catch(err) { notify('Ошибка: '+err.message, 'error'); }
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-}
-
 async function resetData() {
-  if (!userData || userData.role === 'guest' || userData.role === 'viewer') { notify('Нет прав', 'error'); return; }
-  if (confirm('Сбросить все данные?')) {
+  if (!userData || userData.role !== 'admin') { notify('Только админ', 'error'); return; }
+  if (confirm('⚠️ Удалить ВСЕХ игроков из базы? Это действие необратимо.')) {
     const players = Object.keys(playersData);
     for (const p of players) { await db.collection('players').doc(p).delete(); }
     playersData = {};
-    await addHistory('Сброс данных', 'все игроки');
+    await addHistory('Полный сброс', 'все игроки удалены');
     renderTable();
-    notify('Сброшено', 'info');
+    notify('Данные сброшены', 'info');
   }
 }
 
@@ -810,10 +719,21 @@ function renderAdmin() {
     snapshot.forEach(doc => {
       const u = doc.data();
       const isMe = doc.id === currentUser.uid;
-      html += `<div class="user-item"><div><div style="font-weight:600">${u.username || u.email || 'Unknown'} ${isMe?'<span style="color:#95d5b2;font-size:11px">(вы)</span>':''}</div><div style="font-size:11px;color:var(--text-secondary)">${u.role} · ${u.email || 'аноним'}</div></div><div style="display:flex;gap:5px"><button class="btn btn-secondary" onclick="editUserRole('${doc.id}')">✏️</button>${!isMe ? `<button class="btn btn-danger" onclick="deleteUser('${doc.id}')">🗑️</button>` : ''}</div></div>`;
+      html += `<div class="user-item"><div><div style="font-weight:600">${u.username || 'Unknown'} ${isMe?'<span style="color:#95d5b2;font-size:11px">(вы)</span>':''}</div><div style="font-size:11px;color:var(--text-secondary)">${u.role} · ${u.created ? new Date(u.created).toLocaleDateString('ru-RU') : ''}</div></div><div style="display:flex;gap:5px"><button class="btn btn-secondary" onclick="editUserRole('${doc.id}')">✏️</button>${!isMe ? `<button class="btn btn-danger" onclick="deleteUser('${doc.id}')">🗑️</button>` : ''}</div></div>`;
     });
     document.getElementById('userList').innerHTML = html;
   });
+  renderAdminHistory();
+}
+
+function renderAdminHistory() {
+  if (historyLog.length === 0) { document.getElementById('adminHistoryList').innerHTML = '<p style="color:var(--text-secondary);padding:20px">История пуста</p>'; return; }
+  let html = '';
+  historyLog.slice(0, 50).forEach(h => { // Показываем последние 50
+    const d = new Date(h.time); 
+    html += `<div class="history-item"><div class="h-time">${d.toLocaleString('ru-RU')}</div><div><span class="h-user">${h.user}</span> — ${h.action}</div><div>${h.details}</div></div>`; 
+  });
+  document.getElementById('adminHistoryList').innerHTML = html;
 }
 
 function openAddUser() {
@@ -836,12 +756,11 @@ async function createUser() {
     const email = username + EMAIL_SUFFIX;
     const cred = await auth.createUserWithEmailAndPassword(email, password);
     await db.collection('users').doc(cred.user.uid).set({
-      username, role, visibleAlliances: [], visibilityMode: 'show',
-      created: new Date().toISOString()
+      username, role, visibleAlliances: [], visibilityMode: 'show', created: new Date().toISOString()
     });
-    await auth.signOut();
+    await auth.signOut(); // Выходим, чтобы админ мог войти под новым аккаунтом или остаться собой
     closeModal();
-    notify('Пользователь создан! Войдите под его аккаунтом.', 'success');
+    notify('Пользователь создан! Теперь войдите под его именем.', 'success');
   } catch (error) {
     let msg = error.message;
     if (error.code === 'auth/email-already-in-use') msg = 'Это имя уже занято';
@@ -894,24 +813,15 @@ async function deleteUser(userId) {
   }
 }
 
-// ===== HISTORY =====
-function renderHistory() {
-  if (historyLog.length === 0) { document.getElementById('historyList').innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:40px">История пуста</p>'; return; }
-  let html = '';
-  historyLog.forEach(h => { const d = new Date(h.time); html += `<div class="history-item"><div class="h-time">${d.toLocaleString('ru-RU')}</div><div><span class="h-user">${h.user}</span> — ${h.action}</div><div>${h.details}</div></div>`; });
-  document.getElementById('historyList').innerHTML = html;
-}
-
-function exportHistory() { const blob = new Blob([JSON.stringify(historyLog,null,2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'raid_history_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); }
-
 async function clearHistory() {
-  if (confirm('Очистить историю?')) {
+  if (!userData || userData.role !== 'admin') { notify('Только админ', 'error'); return; }
+  if (confirm('Очистить всю историю действий?')) {
     const batch = db.batch();
     const snapshot = await db.collection('history').get();
     snapshot.docs.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
     historyLog = [];
-    renderHistory();
+    renderAdminHistory();
     notify('История очищена', 'info');
   }
 }
