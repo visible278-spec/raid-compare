@@ -87,11 +87,13 @@
   .ocr-status { margin-top: 10px; font-size: 13px; color: #95d5b2; display: none; }
   .ocr-status.error { color: #f4a0a0; }
 
-  .filter-bar { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; background: var(--bg-secondary); padding: 12px 16px; border-radius: 10px; align-items: center; }
+  .filter-bar { display: flex; flex-direction: column; gap: 8px; background: var(--bg-secondary); padding: 12px 16px; border-radius: 10px; margin-bottom: 15px; }
+  .filter-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; width: 100%; }
   .filter-bar input, .filter-bar select { padding: 8px 12px; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--purple); border-radius: 6px; }
   .checkbox-label { display: flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--bg-tertiary); border-radius: 6px; cursor: pointer; border: 1px solid var(--purple); font-size: 12px; }
   .checkbox-label.checked { background: rgba(233,69,96,0.2); border-color: var(--accent); color: var(--accent); }
   .checkbox-label input { display: none; }
+  .filter-group-title { font-size: 12px; color: var(--text-secondary); margin-right: 2px; }
 
   .notification { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: white; z-index: 2000; display: none; }
   .notification.show { display: block; }
@@ -112,7 +114,7 @@
   .privacy-info strong { color: var(--accent); }
   .privacy-info.mode-hide { background: rgba(107,29,29,0.2); border-color: var(--danger); }
 
-  .radio-group { display: flex; gap: 10px; margin-top: 8px; }
+  .radio-group { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
   .radio-label { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg-tertiary); border-radius: 6px; cursor: pointer; border: 1px solid var(--purple); font-size: 12px; }
   .radio-label input { display: none; }
   .radio-label.active { background: rgba(233,69,96,0.2); border-color: var(--accent); color: var(--accent); }
@@ -140,7 +142,17 @@
   .color-picker-item label { font-size: 12px; color: var(--text-secondary); }
   .color-picker-item input[type="color"] { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; background: var(--bg-tertiary); }
 
-  @media (max-width: 768px) { .header { padding: 15px; } .header h1 { font-size: 18px; } .content { padding: 10px; } table { font-size: 10px; } }
+  @media (max-width: 600px) {
+    .form-row { grid-template-columns: 1fr 1fr; }
+    .modal { padding: 20px; }
+    .header { padding: 15px; }
+    .header h1 { font-size: 18px; }
+    .content { padding: 10px; }
+    table { font-size: 10px; }
+    th, td { padding: 4px 6px; }
+    .filter-row { gap: 6px; }
+    .checkbox-label { padding: 3px 7px; font-size: 11px; }
+  }
 </style>
 </head>
 <body>
@@ -167,7 +179,7 @@
       <button class="btn btn-primary" onclick="doRegister()">Зарегистрироваться</button>
     </div>
     <div class="login-divider">или</div>
-    <button class="btn btn-guest" onclick="enterAsGuest()">👁️ Войти как гость (только просмотр)</button>
+    <button class="btn btn-guest" onclick="enterAsGuest()">️ Войти как гость (только просмотр)</button>
   </div>
 </div>
 
@@ -176,15 +188,13 @@
   <div class="header">
     <h1>⚔️ Сравнение рейдов <span id="currentUserBadge" style="font-size:12px;color:var(--text-secondary);margin-left:10px"></span></h1>
     <div class="header-buttons">
-      <button class="btn btn-primary" id="addPlayerBtn" onclick="openAddPlayer()">➕ Игрока</button>
       <button class="btn btn-secondary" onclick="openThemeSettings()">🎨 Тема</button>
-      <button class="btn btn-admin" id="adminBtn" style="display:none" onclick="switchTab('admin')">👑 Админ</button>
       <button class="btn btn-secondary" id="logoutBtn" onclick="doLogout()">🚪 Выйти</button>
     </div>
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('table')">📊 Таблица</button>
+    <button class="tab active" onclick="switchTab('table')"> Таблица</button>
     <button class="tab" onclick="switchTab('compare')">⚔️ Сравнение</button>
     <button class="tab" onclick="switchTab('charts')">📈 Графики</button>
     <button class="tab" onclick="switchTab('players')">👥 Игроки</button>
@@ -195,21 +205,31 @@
     <div id="tab-table" class="tab-content active">
       <div id="privacyBanner" class="privacy-info" style="display:none"></div>
       <div class="filter-bar">
-        <input type="text" id="searchFilter" placeholder="🔍 Поиск..." oninput="renderTable()" style="min-width:200px">
-        <div class="filter-group">
+        <div class="filter-row">
+          <input type="text" id="searchFilter" placeholder="🔍 Поиск..." oninput="renderTable()" style="min-width:180px; flex:1;">
+          <select id="allianceFilter" onchange="renderTable()" style="min-width:140px;">
+            <option value="all">Все альянсы</option>
+          </select>
+          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" id="enableHighlight" checked onchange="renderTable()">💡 Индикация</label>
+        </div>
+        <div class="filter-row">
           <span class="filter-group-title">Юниты:</span>
           <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Пехота" checked onchange="renderTable()">🛡️ Пехота</label>
           <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Кавалерия" checked onchange="renderTable()">🐴 Кавалерия</label>
           <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Лучники" checked onchange="renderTable()">🏹 Лучники</label>
         </div>
-        <div class="filter-group">
+        <div class="filter-row">
           <span class="filter-group-title">Статы:</span>
           <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Атака" checked onchange="renderTable()">⚔️ Атака</label>
-          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Защита" checked onchange="renderTable()">🛡️ Защита</label>
+          <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Защита" checked onchange="renderTable()">️ Защита</label>
           <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Смертоносность" checked onchange="renderTable()">💀 Смерт.</label>
           <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" value="Здоровье" checked onchange="renderTable()">❤️ Здоровье</label>
         </div>
-        <label class="checkbox-label checked" onclick="toggleCheckbox(this)"><input type="checkbox" id="enableHighlight" checked onchange="renderTable()">💡 Индикация</label>
+        <div class="filter-row">
+          <span class="filter-group-title">Комбо:</span>
+          <label class="checkbox-label" onclick="toggleCombo(this, 'atkLeth')"><input type="checkbox" id="comboAtkLeth" onchange="renderTable()">️×💀 Атака×Смерт.</label>
+          <label class="checkbox-label" onclick="toggleCombo(this, 'defHp')"><input type="checkbox" id="comboDefHp" onchange="renderTable()">🛡️×❤️ Защита×Здоровье</label>
+        </div>
       </div>
       <div class="table-container" id="mainTable"></div>
     </div>
@@ -227,7 +247,7 @@
     </div>
 
     <div id="tab-charts" class="tab-content">
-      <div class="filter-bar">
+      <div class="filter-bar" style="flex-direction:row;">
         <select id="chartUnit" onchange="renderCharts()">
           <option value="Пехота">Пехота</option><option value="Кавалерия">Кавалерия</option><option value="Лучники">Лучники</option>
         </select>
@@ -241,7 +261,7 @@
     <div id="tab-players" class="tab-content">
       <div class="compare-panel">
         <h3>👥 Игроки</h3>
-        <button class="btn btn-primary" id="addPlayerBtn2" onclick="openAddPlayer()">➕ Добавить игрока</button>
+        <button class="btn btn-primary" id="addPlayerBtn2" onclick="openAddPlayer()"> Добавить игрока</button>
       </div>
       <div id="playerList"></div>
     </div>
@@ -249,7 +269,7 @@
     <div id="tab-admin" class="tab-content">
       <div class="compare-panel">
         <h3>👑 Управление пользователями</h3>
-        <button class="btn btn-primary" onclick="openAddUser()">➕ Добавить пользователя</button>
+        <button class="btn btn-primary" onclick="openAddUser()"> Добавить пользователя</button>
       </div>
       <div id="userList" style="margin-bottom: 20px;"></div>
       
@@ -427,9 +447,7 @@ function updateUI() {
   document.getElementById('currentUserBadge').textContent = `${userData.username} (${roleLabel})`;
   const isAdmin = userData.role === 'admin';
   const canEdit = userData.role === 'editor' || userData.role === 'admin';
-  document.getElementById('adminBtn').style.display = isAdmin ? 'inline-block' : 'none';
   document.getElementById('adminTab').style.display = isAdmin ? 'inline-block' : 'none';
-  document.getElementById('addPlayerBtn').style.display = canEdit ? 'inline-block' : 'none';
   document.getElementById('addPlayerBtn2').style.display = canEdit ? 'inline-block' : 'none';
   
   const banner = document.getElementById('privacyBanner');
@@ -480,6 +498,54 @@ function switchTab(tab) {
 
 function toggleCheckbox(label) { setTimeout(() => { const cb = label.querySelector('input'); label.classList.toggle('checked', cb.checked); }, 0); }
 
+// Обработка комбо-фильтров: при включении одного — выключаем другой и обычные статы
+function toggleCombo(label, comboId) {
+  setTimeout(() => {
+    const cb = label.querySelector('input');
+    label.classList.toggle('checked', cb.checked);
+    
+    if (cb.checked) {
+      // Выключаем другой комбо
+      if (comboId === 'atkLeth') {
+        document.getElementById('comboDefHp').checked = false;
+        document.querySelectorAll('.checkbox-label').forEach(l => {
+          const inp = l.querySelector('input');
+          if (inp && (inp.value === 'Атака' || inp.value === 'Защита' || inp.value === 'Смертоносность' || inp.value === 'Здоровье')) {
+            // Не трогаем обычные статы, просто комбо переопределит
+          }
+        });
+      } else {
+        document.getElementById('comboAtkLeth').checked = false;
+      }
+      // Снимаем галочки с противоположных комбо-чекбоксов визуально
+      document.querySelectorAll('.checkbox-label').forEach(l => {
+        const inp = l.querySelector('input');
+        if (inp && inp.id === 'comboAtkLeth' && comboId !== 'atkLeth') {
+          l.classList.remove('checked');
+        }
+        if (inp && inp.id === 'comboDefHp' && comboId !== 'defHp') {
+          l.classList.remove('checked');
+        }
+      });
+    }
+    renderTable();
+  }, 0);
+}
+
+function getActiveStats() {
+  const comboAtkLeth = document.getElementById('comboAtkLeth')?.checked;
+  const comboDefHp = document.getElementById('comboDefHp')?.checked;
+  
+  if (comboAtkLeth) return ['Атака', 'Смертоносность'];
+  if (comboDefHp) return ['Защита', 'Здоровье'];
+  
+  // Обычные чекбоксы
+  const checked = document.querySelectorAll('#tab-table input[type="checkbox"][value]:checked');
+  const stats = [];
+  checked.forEach(cb => { if (STATS.includes(cb.value)) stats.push(cb.value); });
+  return stats.length ? stats : STATS;
+}
+
 function isPlayerVisible(playerName) {
   if (userData?.role === 'admin') return true;
   const player = playersData[playerName];
@@ -494,25 +560,41 @@ function isPlayerVisible(playerName) {
 
 function getVisiblePlayers() { return Object.keys(playersData).filter(isPlayerVisible); }
 function getCellClass(value, avg) { if (avg === 0) return ''; const ratio = value / avg; if (ratio >= 1.1) return 'cell-green'; if (ratio >= 0.95) return 'cell-yellow'; return 'cell-red'; }
-function getAlliances() { const alliances = new Set(); Object.values(playersData).forEach(p => { if (p.Альянс) alliances.add(p.Альянс); }); return [...alliances].sort(); }
+
+function getAlliances() { 
+  const alliances = new Set(); 
+  Object.values(playersData).forEach(p => { if (p.Альянс) alliances.add(p.Альянс); }); 
+  return [...alliances].sort(); 
+}
+
+function updateAllianceFilter() {
+  const sel = document.getElementById('allianceFilter');
+  if (!sel) return;
+  const current = sel.value;
+  const alliances = getAlliances();
+  sel.innerHTML = '<option value="all">Все альянсы</option>' + alliances.map(a => `<option value="${a}" ${a===current?'selected':''}>${a}</option>`).join('');
+}
 
 function getFilteredUnits() { 
-  const checked = document.querySelectorAll('#tab-table .filter-group input[type="checkbox"]:checked'); 
+  const checked = document.querySelectorAll('#tab-table input[type="checkbox"][value]:checked'); 
   const units = []; checked.forEach(cb => { if (UNITS.includes(cb.value)) units.push(cb.value); }); 
   return units.length ? units : UNITS; 
-}
-function getFilteredStats() { 
-  const checked = document.querySelectorAll('#tab-table .filter-group input[type="checkbox"]:checked'); 
-  const stats = []; checked.forEach(cb => { if (STATS.includes(cb.value)) stats.push(cb.value); }); 
-  return stats.length ? stats : STATS; 
 }
 
 function renderTable() {
   const search = document.getElementById('searchFilter').value.toLowerCase();
   const highlight = document.getElementById('enableHighlight').checked;
+  const allianceFilter = document.getElementById('allianceFilter').value;
   const units = getFilteredUnits();
-  const stats = getFilteredStats();
-  const players = getVisiblePlayers().filter(p => p.toLowerCase().includes(search));
+  const stats = getActiveStats();
+  
+  updateAllianceFilter();
+  
+  const players = getVisiblePlayers().filter(p => {
+    if (!p.toLowerCase().includes(search)) return false;
+    if (allianceFilter !== 'all' && playersData[p].Альянс !== allianceFilter) return false;
+    return true;
+  });
 
   if (sortState.column) {
     players.sort((a, b) => {
@@ -550,11 +632,10 @@ function renderTable() {
     html += `<td>${totalSum}</td></tr>`;
   });
   
-  // Строка среднего
   html += '<tr><td class="row-header">Среднее</td><td>-</td>';
   units.forEach(unit => { stats.forEach(stat => {
     const avg = allValues[unit+'|'+stat].reduce((a,b)=>a+b,0)/allValues[unit+'|'+stat].length;
-    html += `<td class="cell-avg">${avg.toFixed(1)}</td>`; // Округление до десятых
+    html += `<td class="cell-avg">${avg.toFixed(1)}</td>`;
   });});
   html += '<td class="cell-avg">-</td></tr>';
 
@@ -581,7 +662,7 @@ function renderComparison() {
   let total1=0,total2=0;
   UNITS.forEach(unit => { html += `<tr><td class="unit-header" colspan="5">${unit}</td></tr>`; STATS.forEach(stat => { 
     const v1=playersData[p1]?.[unit]?.[stat]||0, v2=playersData[p2]?.[unit]?.[stat]||0; 
-    const diff=v1-v2, pct=v2>0?((v1/v2-1)*100).toFixed(1):0; // Округление до десятых
+    const diff=v1-v2, pct=v2>0?((v1/v2-1)*100).toFixed(1):0;
     const cls=diff>0?'diff-positive':diff<0?'diff-negative':''; const sign=diff>0?'+':''; 
     total1+=v1; total2+=v2; 
     html += `<tr><td class="row-header">${stat}</td><td>${v1}</td><td>${v2}</td><td class="${cls}">${sign}${diff}</td><td class="${cls}">${sign}${pct}%</td></tr>`; 
@@ -606,7 +687,7 @@ function renderCharts() {
 function renderPlayerList() {
   const names = getVisiblePlayers().sort();
   let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:15px">';
-  names.forEach(name => { let total = 0; UNITS.forEach(u => STATS.forEach(s => { total += playersData[name]?.[u]?.[s]||0; })); const alliance = playersData[name].Альянс||''; html += `<div style="background:var(--bg-tertiary);border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border)"><div><div style="font-weight:600">${name}${alliance?`<span class="alliance-badge">${alliance}</span>`:''}</div><div style="font-size:11px;color:var(--text-secondary)">Σ ${total}</div></div><div style="display:flex;gap:5px">${userData && (userData.role === 'editor' || userData.role === 'admin') ? `<button class="btn btn-secondary" onclick="openEditPlayer('${name}')">✏️</button><button class="btn btn-danger" onclick="deletePlayer('${name}')">🗑️</button>` : ''}</div></div>`; });
+  names.forEach(name => { let total = 0; UNITS.forEach(u => STATS.forEach(s => { total += playersData[name]?.[u]?.[s]||0; })); const alliance = playersData[name].Альянс||''; html += `<div style="background:var(--bg-tertiary);border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border)"><div><div style="font-weight:600">${name}${alliance?`<span class="alliance-badge">${alliance}</span>`:''}</div><div style="font-size:11px;color:var(--text-secondary)">Σ ${total}</div></div><div style="display:flex;gap:5px">${userData && (userData.role === 'editor' || userData.role === 'admin') ? `<button class="btn btn-secondary" onclick="openEditPlayer('${name}')">✏️</button><button class="btn btn-danger" onclick="deletePlayer('${name}')">️</button>` : ''}</div></div>`; });
   html += '</div>';
   document.getElementById('playerList').innerHTML = html;
 }
@@ -623,8 +704,16 @@ function openPlayerModal(editName) {
   html += `<div class="ocr-section"><h4>📷 Распознать скриншот</h4><div class="ocr-dropzone" id="ocrDropzone" onclick="document.getElementById('ocrFileInput').click()"><div style="font-size:40px">📸</div><div>Нажмите или перетащите скриншот</div></div><input type="file" id="ocrFileInput" accept="image/*" style="display:none" onchange="handleOcrFile(event)"><img class="ocr-preview" id="ocrPreview"><div class="ocr-progress" id="ocrProgress"><div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocrProgressFill">0%</div></div></div><div class="ocr-status" id="ocrStatus"></div><div class="ocr-raw-text" id="ocrRawText"></div></div>`;
   html += `<div class="form-group"><label>Имя игрока</label><input type="text" id="playerName" value="${isEdit?editName:''}" placeholder="Имя"></div>`;
   html += `<div class="form-group"><label>Альянс</label><input type="text" id="alliance" value="${player?.Альянс||''}" placeholder="Название альянса"></div>`;
-  UNITS.forEach(unit => { html += `<div class="form-section"><h4>${unit}</h4><div class="form-row">`; STATS.forEach(stat => { const val = player?.[unit]?.[stat] ?? ''; html += `<div class="form-group"><label>${stat}</label><input type="number" id="${unit}_${stat}" value="${val}" placeholder="0" step="0.1"></div>`; }); html += '</div></div>'; });
-  html += `<div class="form-section"><h4>📦 Прочее</h4><div class="form-row" style="grid-template-columns:1fr 2fr"><div class="form-group"><label>Вместимость</label><input type="number" id="capacity" value="${player?.ВместимостьРейда||''}" placeholder="0"></div><div class="form-group"><label>📝 Заметки</label><textarea id="notes" placeholder="Комментарий...">${player?.Заметки||''}</textarea></div></div></div>`;
+  UNITS.forEach(unit => { 
+    html += `<div class="form-section"><h4>${unit}</h4><div class="form-row">`; 
+    STATS.forEach(stat => { 
+      const val = player?.[unit]?.[stat] ?? ''; 
+      const shortLabel = stat === 'Смертоносность' ? 'Смерт.' : stat;
+      html += `<div class="form-group"><label>${shortLabel}</label><input type="number" id="${unit}_${stat}" value="${val}" placeholder="0" step="0.1"></div>`; 
+    }); 
+    html += '</div></div>'; 
+  });
+  html += `<div class="form-section"><h4>📦 Прочее</h4><div class="form-row" style="grid-template-columns:1fr 2fr"><div class="form-group"><label>Вмест.</label><input type="number" id="capacity" value="${player?.ВместимостьРейда||''}" placeholder="0"></div><div class="form-group"><label>📝 Заметки</label><textarea id="notes" placeholder="Комментарий...">${player?.Заметки||''}</textarea></div></div></div>`;
   html += `<div class="modal-buttons"><button class="btn btn-secondary" onclick="closeModal()">Отмена</button><button class="btn btn-primary" onclick="savePlayer('${isEdit?editName:''}')">${isEdit?'💾 Сохранить':'➕ Добавить'}</button></div>`;
   document.getElementById('modalContent').innerHTML = html;
   document.getElementById('modalOverlay').classList.add('show');
@@ -652,14 +741,43 @@ async function runOCR(file) {
   } catch (err) { status.textContent = '❌ ' + err.message; status.className = 'ocr-status error'; status.style.display = 'block'; }
 }
 
+// ===== НОВЫЙ ПАРСЕР: ищет числа формата XX,X или XXX,X =====
 function parseOcrText(text) {
   const parsed = { 'Пехота': {}, 'Кавалерия': {}, 'Лучники': {} };
-  const pattern = /\+([+-]?\d+[.,]?\d*)\s*%/g;
-  const matches = [];
-  let match;
-  while ((match = pattern.exec(text)) !== null) { const val = parseFloat(match[1].replace(',', '.')); if (val > 0 && val < 10000) matches.push(val); }
-  const order = [['Пехота', 'Атака'], ['Пехота', 'Защита'], ['Пехота', 'Смертоносность'], ['Пехота', 'Здоровье'], ['Кавалерия', 'Атака'], ['Кавалерия', 'Защита'], ['Кавалерия', 'Смертоносность'], ['Кавалерия', 'Здоровье'], ['Лучники', 'Атака'], ['Лучники', 'Защита'], ['Лучники', 'Смертоносность'], ['Лучники', 'Здоровье']];
-  for (let i = 0; i < Math.min(matches.length, 24); i += 2) { const idx = i / 2; if (idx < order.length) { const [unit, stat] = order[idx]; if (!parsed[unit][stat]) parsed[unit][stat] = matches[i]; } }
+  
+  // Ищем все числа формата 2-4 цифры + запятая/точка + 1 цифра
+  // \b - граница слова, чтобы не захватить куски больших чисел
+  const pattern = /\b\d{2,4}[.,]\d\b/g;
+  const allNumbers = text.match(pattern) || [];
+  
+  console.log('All numbers found:', allNumbers);
+  
+  // Берём каждое второе число (чётные индексы 0, 2, 4...) — это левый столбец
+  const targetNumbers = allNumbers.filter((_, i) => i % 2 === 0);
+  
+  console.log('Target numbers (left column):', targetNumbers);
+  
+  // Распределяем по категориям
+  const infantry = targetNumbers.slice(0, 4);   // Пехота: Атака, Защита, Смерт, Здоровье
+  const cavalry = targetNumbers.slice(4, 8);    // Кавалерия
+  const archers = targetNumbers.slice(8, 12);   // Лучники
+  
+  const stats = ['Атака', 'Защита', 'Смертоносность', 'Здоровье'];
+  
+  [infantry, cavalry, archers].forEach((group, unitIdx) => {
+    const unit = UNITS[unitIdx];
+    group.forEach((numStr, statIdx) => {
+      if (statIdx < stats.length) {
+        const val = parseFloat(numStr.replace(',', '.'));
+        if (!isNaN(val) && val > 0 && val < 10000) {
+          parsed[unit][stats[statIdx]] = val;
+          console.log(`Parsed: ${unit}.${stats[statIdx]} = ${val}`);
+        }
+      }
+    });
+  });
+  
+  console.log('Final parsed:', parsed);
   return parsed;
 }
 
@@ -701,7 +819,7 @@ function closeModal() { document.getElementById('modalOverlay').classList.remove
 
 async function resetData() {
   if (!userData || userData.role !== 'admin') { notify('Только админ', 'error'); return; }
-  if (confirm('⚠️ Удалить ВСЕХ игроков из базы? Это действие необратимо.')) {
+  if (confirm('️ Удалить ВСЕХ игроков из базы? Это действие необратимо.')) {
     const players = Object.keys(playersData);
     for (const p of players) { await db.collection('players').doc(p).delete(); }
     playersData = {};
@@ -729,7 +847,7 @@ function renderAdmin() {
 function renderAdminHistory() {
   if (historyLog.length === 0) { document.getElementById('adminHistoryList').innerHTML = '<p style="color:var(--text-secondary);padding:20px">История пуста</p>'; return; }
   let html = '';
-  historyLog.slice(0, 50).forEach(h => { // Показываем последние 50
+  historyLog.slice(0, 50).forEach(h => {
     const d = new Date(h.time); 
     html += `<div class="history-item"><div class="h-time">${d.toLocaleString('ru-RU')}</div><div><span class="h-user">${h.user}</span> — ${h.action}</div><div>${h.details}</div></div>`; 
   });
@@ -740,7 +858,7 @@ function openAddUser() {
   let html = `<h2>➕ Добавить пользователя</h2>
     <div class="form-group"><label>Имя пользователя</label><input type="text" id="newUsername" placeholder="Имя"></div>
     <div class="form-group"><label>Пароль</label><input type="password" id="newUserPassword" placeholder="Пароль"></div>
-    <div class="form-group"><label>Роль</label><select id="newUserRole"><option value="viewer">👁️ Просмотр</option><option value="editor">✏️ Редактор</option><option value="admin">👑 Админ</option></select></div>
+    <div class="form-group"><label>Роль</label><select id="newUserRole"><option value="viewer">👁️ Просмотр</option><option value="editor">️ Редактор</option><option value="admin">👑 Админ</option></select></div>
     <div class="modal-buttons"><button class="btn btn-secondary" onclick="closeModal()">Отмена</button><button class="btn btn-primary" onclick="createUser()">Создать</button></div>`;
   document.getElementById('modalContent').innerHTML = html;
   document.getElementById('modalOverlay').classList.add('show');
@@ -758,7 +876,7 @@ async function createUser() {
     await db.collection('users').doc(cred.user.uid).set({
       username, role, visibleAlliances: [], visibilityMode: 'show', created: new Date().toISOString()
     });
-    await auth.signOut(); // Выходим, чтобы админ мог войти под новым аккаунтом или остаться собой
+    await auth.signOut();
     closeModal();
     notify('Пользователь создан! Теперь войдите под его именем.', 'success');
   } catch (error) {
