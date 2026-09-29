@@ -609,34 +609,87 @@ function renderTable() {
   let html = '<table><thead><tr>';
   html += `<th class="row-header" onclick="sortTable('name')">Игрок ${getSortArrow('name')}</th>`;
   html += `<th onclick="sortTable('alliance')">Альянс ${getSortArrow('alliance')}</th>`;
-  units.forEach(unit => { stats.forEach(stat => { const colKey = unit+'|'+stat; html += `<th onclick="sortTable('${colKey}')">${unit}<br>${stat} ${getSortArrow(colKey)}</th>`; });});
+  units.forEach(unit => { 
+    if (document.getElementById('comboAtkLeth')?.checked) {
+      html += `<th onclick="sortTable('${unit}|comboAtkLeth')">${unit}<br>Атака×Смерт. ${getSortArrow(unit+'|comboAtkLeth')}</th>`;
+    } else if (document.getElementById('comboDefHp')?.checked) {
+      html += `<th onclick="sortTable('${unit}|comboDefHp')">${unit}<br>Защита×Здоровье ${getSortArrow(unit+'|comboDefHp')}</th>`;
+    } else {
+      stats.forEach(stat => { const colKey = unit+'|'+stat; html += `<th onclick="sortTable('${colKey}')">${unit}<br>${stat} ${getSortArrow(colKey)}</th>`; });
+    }
+  });
   html += `<th onclick="sortTable('total')">Σ ${getSortArrow('total')}</th>`;
   html += '</tr></thead><tbody>';
 
   const allValues = {};
-  units.forEach(unit => { stats.forEach(stat => { allValues[unit+'|'+stat] = players.map(p => playersData[p]?.[unit]?.[stat]||0); }); });
+  units.forEach(unit => { 
+    if (document.getElementById('comboAtkLeth')?.checked) {
+      allValues[unit+'|comboAtkLeth'] = players.map(p => {
+        const atk = playersData[p]?.[unit]?.['Атака']||0;
+        const leth = playersData[p]?.[unit]?.['Смертоносность']||0;
+        return (atk/100) * (leth/100) * 100;
+      });
+    } else if (document.getElementById('comboDefHp')?.checked) {
+      allValues[unit+'|comboDefHp'] = players.map(p => {
+        const def = playersData[p]?.[unit]?.['Защита']||0;
+        const hp = playersData[p]?.[unit]?.['Здоровье']||0;
+        return (def/100) * (hp/100) * 100;
+      });
+    } else {
+      stats.forEach(stat => { allValues[unit+'|'+stat] = players.map(p => playersData[p]?.[unit]?.[stat]||0); });
+    }
+  });
 
   players.forEach(p => {
     const alliance = playersData[p].Альянс || '';
     html += `<tr><td class="row-header" style="cursor:pointer" onclick="openEditPlayer('${p}')">${p}${alliance?`<span class="alliance-badge">${alliance}</span>`:''}</td>`;
     html += `<td>${alliance||'-'}</td>`;
     let totalSum = 0;
-    units.forEach(unit => { stats.forEach(stat => {
-      const v = playersData[p]?.[unit]?.[stat]||0;
-      const avg = allValues[unit+'|'+stat].reduce((a,b)=>a+b,0)/allValues[unit+'|'+stat].length;
-      let cls = '';
-      if (highlight) cls = getCellClass(v, avg);
-      html += `<td class="${cls}">${v}</td>`;
-      totalSum += v;
-    });});
+    units.forEach(unit => { 
+      if (document.getElementById('comboAtkLeth')?.checked) {
+        const atk = playersData[p]?.[unit]?.['Атака']||0;
+        const leth = playersData[p]?.[unit]?.['Смертоносность']||0;
+        const combo = (atk/100) * (leth/100) * 100; // произведение в процентах
+        const avgCombo = allValues[unit+'|comboAtkLeth'].reduce((a,b)=>a+b,0)/allValues[unit+'|comboAtkLeth'].length;
+        let cls = highlight ? getCellClass(combo, avgCombo) : '';
+        html += `<td class="${cls}">${combo.toFixed(1)}%</td>`;
+        totalSum += combo;
+      } else if (document.getElementById('comboDefHp')?.checked) {
+        const def = playersData[p]?.[unit]?.['Защита']||0;
+        const hp = playersData[p]?.[unit]?.['Здоровье']||0;
+        const combo = (def/100) * (hp/100) * 100;
+        const avgCombo = allValues[unit+'|comboDefHp'].reduce((a,b)=>a+b,0)/allValues[unit+'|comboDefHp'].length;
+        let cls = highlight ? getCellClass(combo, avgCombo) : '';
+        html += `<td class="${cls}">${combo.toFixed(1)}%</td>`;
+        totalSum += combo;
+      } else {
+        stats.forEach(stat => {
+          const v = playersData[p]?.[unit]?.[stat]||0;
+          const avg = allValues[unit+'|'+stat].reduce((a,b)=>a+b,0)/allValues[unit+'|'+stat].length;
+          let cls = highlight ? getCellClass(v, avg) : '';
+          html += `<td class="${cls}">${v}</td>`;
+          totalSum += v;
+        });
+      }
+    });
     html += `<td>${totalSum}</td></tr>`;
   });
   
   html += '<tr><td class="row-header">Среднее</td><td>-</td>';
-  units.forEach(unit => { stats.forEach(stat => {
-    const avg = allValues[unit+'|'+stat].reduce((a,b)=>a+b,0)/allValues[unit+'|'+stat].length;
-    html += `<td class="cell-avg">${avg.toFixed(1)}</td>`;
-  });});
+  units.forEach(unit => { 
+    if (document.getElementById('comboAtkLeth')?.checked) {
+      const avg = allValues[unit+'|comboAtkLeth'].reduce((a,b)=>a+b,0)/allValues[unit+'|comboAtkLeth'].length;
+      html += `<td class="cell-avg">${avg.toFixed(1)}%</td>`;
+    } else if (document.getElementById('comboDefHp')?.checked) {
+      const avg = allValues[unit+'|comboDefHp'].reduce((a,b)=>a+b,0)/allValues[unit+'|comboDefHp'].length;
+      html += `<td class="cell-avg">${avg.toFixed(1)}%</td>`;
+    } else {
+      stats.forEach(stat => {
+        const avg = allValues[unit+'|'+stat].reduce((a,b)=>a+b,0)/allValues[unit+'|'+stat].length;
+        html += `<td class="cell-avg">${avg.toFixed(1)}</td>`;
+      });
+    }
+  });
   html += '<td class="cell-avg">-</td></tr>';
 
   html += '</tbody></table>';
